@@ -102,7 +102,7 @@ function siblingAttachmentPage(kind){
     StudioContinuation:{sourceInput:()=> 'reference',sourceLabel:()=> 'Source',normalize:value=>value,guidance:()=>[]},
     post:(url,body,options)=>{writes.push({url,body,options});return response.promise;},
     confirm:()=>true,workbenchStamp:()=> 'same',syncReady(){},updateReady(){},renderReferenceSlots(){},forgetDrawnGuide(){},focusReadinessTarget(){},
-    announce:(...args)=>messages.push(args),saveDraft:()=>effects.push('save'),syncCreate:()=>effects.push('sync'),
+    announce:(...args)=>{messages.push(args);node('#status').textContent=args[0];},saveDraft:()=>effects.push('save'),syncCreate:()=>effects.push('sync'),
     attachContinuationSource:()=>effects.push('attach'),replaceParentAsset:()=>effects.push('parent'),selectPreset:()=>effects.push('reset'),
     dismissSecondPicture:()=>{context.secondPicture=null;effects.push('dismiss');},secondName:value=>value.asset.title,
   };
@@ -115,7 +115,7 @@ function siblingAttachmentPage(kind){
   if(kind==='replace')vm.runInContext(section(workbench,"  q('#uxSecondReplace').onclick=async()=>{",'  // The existing slot attachment owner'),context);
   if(kind==='slot')vm.runInContext(section(workbench,"  q('#uxSecondSlots').onclick=async e=>{",'  // A modal handoff'),context);
   const call=()=>kind==='reattach'?context.reattachSource():kind==='replace'?node('#uxSecondReplace').onclick():kind==='slot'?node('#uxSecondSlots').onclick({target:{closest:()=>button}}):context.pullIntoSlot(1,item.asset.id);
-  const stale=()=>{privacy.scope='regular';privacy.revision++;context.privacyChange({detail:{scope:'regular',previousScope:'private',creation:'private',previousCreation:'private'}});context.pickerBusy=true;context.pickerBusyOwner={newer:true};};
+  const stale=()=>{privacy.scope='regular';privacy.revision++;context.privacyChange({detail:{scope:'regular',previousScope:'private',creation:'private',previousCreation:'private'}});context.pickerBusy=true;context.pickerBusyOwner={newer:true};node('#uxReadinessActionStatus').textContent='Regular repair feedback';node('#status').textContent='Regular run status';};
   const reply=()=>{const source=kind==='reattach'?'private-source':'private-second',sha=kind==='reattach'?'source-sha':'second-sha';response.resolve({file:'private-copy.png',parent_asset:source,sha256:sha,context:{asset_id:source,sha256:sha,positive:'private response canary'}});};
   return {context,privacy,messages,writes,effects,response,call,stale,reply,button};
 }
@@ -124,6 +124,8 @@ for(const kind of ['reattach','replace','slot','pull']){
     const h=siblingAttachmentPage(kind),request=h.call();assert.equal(h.writes.length,1);
     h.stale();h.response.reject(Error('Private sibling error canary'));await request;
     assert.deepEqual(h.messages,[]);assert.equal(h.context.pickerBusy,true);assert.deepEqual(h.effects,[]);
+    assert.equal(h.context.q('#uxReadinessActionStatus').textContent,'Regular repair feedback','the private refusal cannot replace the current repair feedback');
+    assert.equal(h.context.q('#status').textContent,'Regular run status');
   });
   test(`a ${kind} acknowledgment after a privacy-view change cannot apply to the current draft`,async()=>{
     const h=siblingAttachmentPage(kind),claim=JSON.stringify(h.context.continuationState),slots=JSON.stringify(h.context.referenceRecords),request=h.call();
@@ -131,13 +133,32 @@ for(const kind of ['reattach','replace','slot','pull']){
     assert.equal(h.writes.length,1,'the admitted copy is never retried');
     assert.equal(JSON.stringify(h.context.continuationState),claim);assert.equal(JSON.stringify(h.context.referenceRecords),slots);
     assert.deepEqual(h.effects,[]);assert.deepEqual(h.messages,[]);assert.equal(h.context.pickerBusy,true);
+    assert.equal(h.context.q('#uxReadinessActionStatus').textContent,'Regular repair feedback','the private acknowledgment cannot replace the current repair feedback');
+    assert.equal(h.context.q('#status').textContent,'Regular run status');
   });
   test(`an unchanged ${kind} owner applies its single acknowledged copy`,async()=>{
-    const h=siblingAttachmentPage(kind),request=h.call();h.reply();await request;
+    const h=siblingAttachmentPage(kind);h.context.q('#status').textContent='Existing run status';
+    const request=h.call();h.reply();await request;
     assert.equal(h.writes.length,1);assert.ok(h.effects.includes('save'));assert.equal(h.context.pickerBusy,false);
-    assert.ok(h.messages.length||kind==='pull');
+    if(kind==='reattach'){
+      assert.equal(h.context.q('#uxReadinessActionStatus').textContent,'Original picture restored to Source. No new generation was started.');
+      assert.deepEqual(h.messages,[],'the repair live region owns the result without a duplicate global announcement');
+      assert.equal(h.context.q('#status').textContent,'Existing run status','repair feedback does not overwrite the run-status owner');
+    }else assert.ok(h.messages.length||kind==='pull');
   });
 }
+test('a current private source-repair refusal stays in its dedicated status without duplicate announcements',async()=>{
+  const h=siblingAttachmentPage('reattach'),claim=JSON.stringify(h.context.continuationState);
+  h.context.q('#status').textContent='Existing run status';
+  const request=h.call();
+  assert.equal(h.context.q('#uxReadinessActionStatus').textContent,'Putting the source back. No generation is requested.');
+  h.response.reject(Error('Private source is unavailable'));await request;
+  assert.equal(h.writes.length,1);assert.equal(h.writes[0].options.headers['X-Studio-Privacy'],'private');
+  assert.equal(h.context.q('#uxReadinessActionStatus').textContent,'Private source is unavailable');
+  assert.deepEqual(h.messages,[]);assert.equal(h.context.q('#status').textContent,'Existing run status');
+  assert.equal(JSON.stringify(h.context.continuationState),claim);assert.deepEqual(h.effects,[]);
+  assert.equal(h.context.pickerBusy,false);assert.equal(h.context.pickerBusyOwner,null);
+});
 test('privacy retirement clears the extra-slot affordance before its old response settles',async()=>{
   const h=siblingAttachmentPage('slot'),request=h.call();
   assert.equal(h.button.disabled,true);assert.equal(h.context.secondPanel.attributes['aria-busy'],'true');

@@ -49,6 +49,71 @@ class RecipeWording(unittest.TestCase):
     def default(self, preset):
         return self.page.evaluate("(id)=>catalog.presets.find(p=>p.id===id).defaults.positive", preset)
 
+    def open_saved_setups(self):
+        for identity in ('workshopSettings', 'workshopSaved'):
+            disclosure = self.page.locator('#' + identity)
+            if not disclosure.evaluate('(node)=>node.open'):
+                disclosure.locator(':scope > summary').click()
+
+    def reject_import_candidate(self):
+        # A rejected file never reaches applySaved, so its native input/change events must not edit the recipe.
+        self.page.set_input_files('#importRecipe', {'name': 'invalid.json', 'mimeType': 'application/json', 'buffer': b'not JSON'})
+        self.page.wait_for_function("document.querySelector('#status').textContent.includes('Could not import recipe:')")
+
+    def test_saved_setup_fields_do_not_autosave_or_prompt_to_discard(self):
+        self.page.wait_for_timeout(400)  # settle the existing 350 ms draft debounce before comparing storage
+        draft_keys = "JSON.stringify(Object.fromEntries(Object.entries(localStorage).filter(([key])=>key.startsWith('studio-draft-v1:'))))"
+        before = self.page.evaluate(draft_keys)
+        self.open_saved_setups()
+        self.page.fill('#saveName', 'A name for later')
+        self.reject_import_candidate()
+        self.page.wait_for_timeout(400)
+        self.assertEqual(self.page.evaluate(draft_keys), before, 'library metadata must not write an active draft')
+        self.switch('sdxl')
+        self.assertEqual(self.confirms, [], 'a pristine recipe remains pristine after naming or rejecting a saved setup')
+
+    def test_saved_setup_fields_preserve_go_back_to_the_picture(self):
+        self.stage_picture()
+        self.page.fill('#positive', MINE)
+        self.switch('sdxl')
+        self.page.locator('#uxWordingUndoBack').wait_for(state='visible')
+        self.open_saved_setups()
+        self.page.fill('#saveName', 'Keep this name separate')
+        self.reject_import_candidate()
+        self.assertTrue(self.page.locator('#uxWordingUndoBack').is_visible())
+        self.page.click('#uxWordingUndoBack')
+        self.assertEqual(self.page.evaluate('selected.id'), 'gentle-variation')
+        self.assertEqual(self.page.evaluate("document.querySelector('#reference').files[0]?.name"), 'lantern-reference.png')
+        self.assertEqual(self.page.input_value('#positive'), MINE)
+
+    def test_picture_recipe_link_is_visible_with_settings_closed_and_focuses_its_input(self):
+        for width in (1440, 390):
+            with self.subTest(width=width):
+                self.page.set_viewport_size({'width': width, 'height': 900})
+                self.page.evaluate("selectPreset('anima-portrait')")
+                self.page.locator('#workshopSettings').evaluate('(node)=>node.open=false')
+                link = self.page.locator('#uxFindReferenceRecipes')
+                self.assertTrue(link.is_visible())
+                self.assertTrue(link.evaluate('(node)=>!!node.closest(".wk-recipe")'))
+                self.assertEqual(link.inner_text(), 'Start from a picture instead')
+                self.assertTrue(link.evaluate('(node)=>{const box=node.getBoundingClientRect();return box.left>=0&&box.right<=innerWidth}'))
+                self.assertTrue(self.page.evaluate('document.documentElement.scrollWidth<=innerWidth'), 'the source link must wrap inside the recipe chip')
+                link.click()
+                self.assertTrue(self.page.evaluate('!!selected.reference || !!selected.reference_slots?.length'))
+                self.assertTrue(link.is_hidden())
+                self.assertTrue(self.page.evaluate("document.activeElement.id==='reference' || document.activeElement.dataset.refFile==='0'"))
+                self.assertFalse(self.page.locator('#workshopSettings').evaluate('(node)=>node.open'))
+
+    def test_picture_recipe_link_ignores_a_hidden_board_from_the_previous_recipe(self):
+        self.page.evaluate("selectPreset('qwen-3ref');selectPreset('anima-portrait')")
+        retained_slot = self.page.locator('[data-ref-file="0"]')
+        self.assertEqual(retained_slot.count(), 1, 'the old board remains mounted')
+        self.assertTrue(retained_slot.is_hidden())
+        self.page.locator('#uxFindReferenceRecipes').click()
+        self.assertTrue(self.page.evaluate('!!selected.reference && !selected.reference_slots?.length'), 'the first reference recipe uses a single picture')
+        self.assertTrue(self.page.locator('#reference').is_visible())
+        self.assertTrue(self.page.locator('#reference').evaluate('(node)=>node===document.activeElement'))
+
     def test_typed_wording_can_be_put_back_after_a_switch(self):
         self.page.fill('#positive', MINE)
         self.switch('sdxl')

@@ -65,6 +65,8 @@ Not changed: the guide coach panel (it still does not advance by itself when a p
 list.
 ## Full editor: a step strip that says where you are and what comes next, 2 November 2026 (#1920)
 
+**Superseded 5 November 2026:** #2006 (`866e39e`) removed the step strip and `editor-steps.js`. The historical measurements below describe that earlier implementation; #1938 was closed as superseded, not as a verified privacy-signal fix. #1920 remains open for owner validation.
+
 The owner got a good first picture in the Full editor but felt lost beyond it. The editor card now opens with five
 short steps (Recipe, Describe, Your picture, Generate, Next) with the current one marked and done ones ticked, and one
 sentence saying what to do now. After a run started in this tab finishes with a picture, Next becomes current and the

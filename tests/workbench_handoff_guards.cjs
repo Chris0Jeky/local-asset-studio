@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const source = fs.readFileSync(path.join(__dirname, '../app/static/studio-workbench.js'), 'utf8');
 const references = fs.readFileSync(path.join(__dirname, '../app/static/references.js'), 'utf8');
 const app = fs.readFileSync(path.join(__dirname, '../app/static/app.js'), 'utf8');
+const workshop = fs.readFileSync(path.join(__dirname, '../app/static/workshop.js'), 'utf8');
 const privacyOptionsSource = app.match(/^function privacyOptions\([^\n]+/m)?.[0];
 assert.ok(privacyOptionsSource, 'attachment handlers use the actual app privacy helper');
 const attachmentSource = references.slice(references.indexOf('const referenceAttachments='), references.indexOf('// The readiness model itself lives'));
@@ -335,3 +336,216 @@ test('a result tile review of an already known asset makes no extra read', async
   await harness.press({uxReview: 'selected', asset: 'near'});
   assert.deepEqual(JSON.parse(harness.state()).resolveCalls, []);
 });
+
+// #2008: Saved setups is inside .editor for presentation, but its form does not edit the active recipe.
+const editorInputSource = between("  q('#createView .editor')?.addEventListener('input'", "\n  after('renderSelected'");
+const draftEventsSource = between("  for(const event of ['input','change'])q('#createView')", "\n  q('#createView').addEventListener('click'");
+function editorEventHarness() {
+  const listeners = {editor: {}, create: {}}, cleared = [], scheduled = [];
+  let nextTimer = 100;
+  const context = {
+    q: selector => ({addEventListener(type, handler) { listeners[selector.endsWith('.editor') ? 'editor' : 'create'][type] = handler; }}),
+    clearTimeout: timer => cleared.push(timer),
+    setTimeout: (handler, delay) => { scheduled.push({handler, delay}); return ++nextTimer; },
+  };
+  vm.runInNewContext([
+    'let pictureKept={id:"previous-picture"},draftDirty=false,draftTimer=99,undoRenders=0,readinessSyncs=0,saves=0;',
+    'const renderUndo=()=>undoRenders++,syncReady=()=>readinessSyncs++,saveDraft=()=>saves++;',
+    editorInputSource, draftEventsSource,
+    'this.state=()=>({pictureKept:!!pictureKept,draftDirty,draftTimer,undoRenders,readinessSyncs,saves});',
+  ].join('\n'), context);
+  return {
+    state: () => JSON.parse(JSON.stringify(context.state())), cleared, scheduled,
+    fire(type, saved, id = 'saveName') {
+      const event = {isTrusted: true, target: {id, closest: selector => selector === '.editor' || (saved && selector === '#workshopSaved')}};
+      listeners.editor[type]?.(event); // capture on .editor, then bubble through #createView
+      listeners.create[type]?.(event);
+    },
+  };
+}
+
+for (const id of ['saveName', 'importRecipe']) {
+  test(`#2008: ${id} input and change preserve the picture undo and leave the draft untouched`, () => {
+    const harness = editorEventHarness(), before = harness.state();
+    harness.fire('input', true, id); harness.fire('change', true, id);
+    assert.deepEqual(harness.state(), before);
+    assert.deepEqual(harness.cleared, [], 'saved setup metadata must not cancel an existing real edit debounce');
+    assert.deepEqual(harness.scheduled, [], 'saved setup metadata must not schedule autosave');
+  });
+}
+
+test('#2008: an actual editor edit still invalidates picture undo and schedules its draft', () => {
+  const harness = editorEventHarness();
+  harness.fire('input', false, 'seed');
+  assert.deepEqual(harness.state(), {pictureKept: false, draftDirty: true, draftTimer: 101, undoRenders: 1, readinessSyncs: 1, saves: 0});
+  assert.deepEqual(harness.cleared, [99]);
+  assert.equal(harness.scheduled[0].delay, 350);
+  harness.fire('input', true);
+  assert.equal(harness.state().draftTimer, 101, 'naming a saved setup must not postpone the real edit');
+  assert.equal(harness.scheduled.length, 1);
+  harness.scheduled[0].handler();
+  assert.equal(harness.state().saves, 1);
+  harness.fire('change', false, 'seed');
+  assert.equal(harness.state().readinessSyncs, 2, 'change-only controls retain their draft owner');
+});
+
+const hasEditsStart = workshop.indexOf('    function hasEdits()');
+assert.notEqual(hasEditsStart, -1);
+const hasEditsSource = workshop.slice(hasEditsStart, workshop.indexOf('    const pickerChoices', hasEditsStart));
+function discardHarness(inputs) {
+  const prompt = {value: 'Example wording'}, negative = {value: ''};
+  const context = {
+    bridge: {recipe: () => ({defaults: {positive: 'Example wording', seed: 42}}), hasSources: () => false},
+    q: selector => selector === '#positive' ? prompt : negative,
+    editor: {querySelectorAll: () => inputs}, actions: {querySelectorAll: () => []},
+  };
+  vm.runInNewContext(hasEditsSource + '\nthis.hasEdits=hasEdits;', context);
+  return context.hasEdits;
+}
+function editorField({saved = false, ...values}) {
+  return {type: 'text', tagName: 'INPUT', value: '', defaultValue: '', dataset: {}, closest: selector => saved && selector === '#workshopSaved', ...values};
+}
+
+test('#2008: saved name and import file do not trigger a discard confirmation', () => {
+  const name = editorField({saved: true, id: 'saveName', value: 'Next setup'});
+  const file = editorField({saved: true, id: 'importRecipe', type: 'file', files: [{name: 'candidate.json'}]});
+  assert.equal(discardHarness([name, file])(), false);
+});
+
+test('#2008: active recipe settings and picture files still trigger discard confirmation', () => {
+  assert.equal(discardHarness([editorField({dataset: {key: 'seed'}, value: '42'})])(), false);
+  assert.equal(discardHarness([editorField({dataset: {key: 'seed'}, value: '43'})])(), true);
+  assert.equal(discardHarness([editorField({type: 'file', files: [{name: 'source.png'}]})])(), true);
+});
+
+const referenceLinkSource = between("  q('#uxFindReferenceRecipes').onclick=", '\n  const advanced=');
+for (const accept of [false, true]) {
+  test(`#2008: picture-recipe link ${accept ? 'accepts' : 'cancels'} the existing wording confirmation`, () => {
+    const link = {}, reference = {}, calls = [], context = {
+      selected: {defaults: {positive: 'Example wording'}},
+      q: selector => selector === '#uxFindReferenceRecipes' ? link : selector === '#positive' ? {value: 'My own wording'} : selector === '#reference' ? reference : null,
+      confirm: () => { calls.push('confirm'); return accept; },
+      chooseIntent: intent => calls.push(intent),
+      focusReadinessTarget: node => calls.push(node),
+    };
+    vm.runInNewContext(referenceLinkSource, context);
+    link.onclick();
+    assert.deepEqual(calls, accept ? ['confirm', 'edit', reference] : ['confirm']);
+  });
+}
+
+const reattachSourceCode = between('  async function reattachSource(){', '\n  // One slot, two pictures:');
+for (const slots of [[], [{}]]) {
+  test(`#2008: picture link focuses the current ${slots.length ? 'board' : 'single-image'} recipe instead of a retained hidden input`, () => {
+    const link = {}, board = {id: 'retained-board-slot'}, reference = {id: 'reference'}, focused = [];
+    const context = {
+      selected: {defaults: {positive: 'Example wording'}},
+      q: selector => selector === '#uxFindReferenceRecipes' ? link : selector === '#positive' ? {value: 'Example wording'} : selector === '#reference' ? reference : board,
+      confirm: () => { throw Error('An unchanged example needs no confirmation'); },
+      chooseIntent: () => { context.selected = {reference: !slots.length, reference_slots: slots}; },
+      focusReadinessTarget: node => focused.push(node),
+    };
+    vm.runInNewContext(referenceLinkSource, context); link.onclick();
+    assert.deepEqual(focused, [slots.length ? board : reference]);
+  });
+}
+
+function sourceRepairHarness() {
+  const status = {textContent: ''}, runStatus = {textContent: ''}, notices = [], requests = [], attached = [], pending = [];
+  const context = {
+    q: selector => selector === '#status' ? runStatus : status,
+    announce: (text, error) => { runStatus.textContent = text; notices.push({text, error}); },
+    continuationState: {source_asset_id: 'source', source_sha256: 'hash', reference_file: 'old.png'},
+    pickerBusy: false, pickerBusyOwner: null, handoffBusy: false, submitting: false, restoring: false, selectionEpoch: 1,
+    privacyOptions: () => ({}), syncReady() {}, saveDraft() {}, syncCreate() {},
+    post: (url, body) => { requests.push({url, body}); return new Promise((resolve, reject) => { pending.push({resolve, reject}); }); },
+    StudioContinuation: {normalize: value => value, sourceInput: () => 'reference', sourceLabel: () => 'Source picture'},
+    selected: {}, varyUnapplied: null, secondPanel: {hidden: false}, pendingInputs: new Set(['reference']),
+    privacyRevision: 1,
+    attachContinuationSource: result => attached.push(result.file),
+  };
+  context.StudioPrivacy = {capture: () => ({revision: context.privacyRevision})};
+  vm.runInNewContext(reattachSourceCode + '\nthis.run=reattachSource;', context);
+  return {context, status, runStatus, requests, attached, notices,
+    finish: (index = pending.length - 1) => pending[index].resolve({file: 'restored.png', sha256: 'hash', parent_asset: 'source', context: {sha256: 'hash'}}),
+    fail: (index = pending.length - 1) => pending[index].reject(Error('Source copy is unavailable.'))};
+}
+
+test('#2008: source repair reports checking then its verified result in the same dock status', async () => {
+  const h = sourceRepairHarness(), run = h.context.run();
+  assert.equal(h.status.textContent, 'Putting the source back. No generation is requested.');
+  h.finish(); await run;
+  assert.equal(h.status.textContent, 'Original picture restored to Source picture. No new generation was started.');
+  assert.equal(h.runStatus.textContent, '', 'a repair result must not be repeated by the run-status live region');
+  assert.deepEqual(h.notices, [], 'the dedicated live region owns this feedback without a duplicate announcement');
+  assert.deepEqual(h.attached, ['restored.png']);
+  assert.deepEqual(h.requests.map(request => request.url), ['/api/assets/reference']);
+  assert.equal(h.context.pickerBusy, false);
+});
+
+test('#2008: failed and superseded source repairs never leave a false success or checking result', async () => {
+  const failed = sourceRepairHarness(), first = failed.context.run();
+  failed.fail(); await first;
+  assert.equal(failed.status.textContent, 'Source copy is unavailable.');
+  assert.equal(failed.runStatus.textContent, '', 'failure remains visible in its repair region without duplication');
+  assert.deepEqual(failed.notices, []);
+  assert.deepEqual(failed.attached, []);
+  const stale = sourceRepairHarness(), second = stale.context.run();
+  stale.context.privacyRevision++; stale.context.pickerBusyOwner = null; stale.context.pickerBusy = false;
+  stale.finish(); await second;
+  assert.equal(stale.status.textContent, 'The task changed while checking the source. Nothing was attached.');
+  assert.deepEqual(stale.attached, []);
+});
+
+test('#2008: busy and missing-source repairs explain their refusal without a request', async () => {
+  const busy = sourceRepairHarness(); busy.context.pickerBusy = true; await busy.context.run();
+  assert.match(busy.status.textContent, /local operation is running/);
+  assert.deepEqual(busy.requests, []);
+  const missing = sourceRepairHarness(); missing.context.continuationState = null; await missing.context.run();
+  assert.match(missing.status.textContent, /No continuation source is available/);
+  assert.deepEqual(missing.requests, []);
+});
+
+for (const rejected of [false, true]) {
+  test(`#2008: a superseded source ${rejected ? 'failure' : 'reply'} cannot overwrite a newer repair's progress`, async () => {
+    const h = sourceRepairHarness(), first = h.context.run();
+    h.context.privacyRevision++; h.context.pickerBusy = false; h.context.pickerBusyOwner = null;
+    const second = h.context.run(), newerOwner = h.context.pickerBusyOwner;
+    if (rejected) h.fail(0); else h.finish(0);
+    await first;
+    assert.equal(h.status.textContent, 'Putting the source back. No generation is requested.');
+    assert.equal(h.context.pickerBusyOwner, newerOwner, 'the newer attachment operation retains ownership');
+    assert.equal(h.context.pickerBusy, true);
+    assert.deepEqual(h.attached, [], 'the stale response never attaches its source');
+    h.finish(1); await second;
+    assert.equal(h.status.textContent, 'Original picture restored to Source picture. No new generation was started.');
+    assert.deepEqual(h.attached, ['restored.png']);
+    assert.equal(h.context.pickerBusy, false);
+  });
+}
+
+const resolveReadinessSource = between('  function resolveReadiness(action){', "\n  q('#uxBlockers').onclick=");
+for (const success of [false, true]) {
+  test(`#2008: environment switch ${success ? 'success' : 'refusal'} has one dock feedback owner`, () => {
+    const status = {textContent: ''}, runStatus = {textContent: ''}, choice = {options: [{}], value: ''};
+    let switches = 0, poll;
+    const nodes = {'#uxReadinessActionStatus': status, '#status': runStatus, '#backendChoice': choice,
+      '#switchBackend': {disabled: false, click: () => switches++}, '#backendStatus': {textContent: 'Another operation is running.'}};
+    const context = {
+      q: selector => nodes[selector], selected: {backend_id: 'hidream'},
+      readinessItems: () => ({items: [{action: 'switch'}]}), envName: () => 'HiDream',
+      message: text => { runStatus.textContent = text; },
+      setInterval: callback => { poll = callback; return 1; }, clearInterval() {},
+      backendSwitching: false, backendActive: 'primary',
+    };
+    vm.runInNewContext(resolveReadinessSource + '\nthis.run=()=>resolveReadiness("switch");', context);
+    context.run();
+    assert.equal(switches, 1, 'repair still delegates exactly once to the existing explicit switch control');
+    assert.match(status.textContent, /Switching to HiDream/);
+    assert.equal(runStatus.textContent, '', 'switch progress is not copied into the adjacent run status');
+    if (success) context.backendActive = 'hidream';
+    poll();
+    assert.match(status.textContent, success ? /HiDream is running/ : /switch did not happen: Another operation is running/);
+    assert.equal(runStatus.textContent, '', 'the completed switch result has a single live-region owner');
+  });
+}

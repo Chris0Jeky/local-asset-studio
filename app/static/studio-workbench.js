@@ -67,13 +67,13 @@
   fillsBlock.addEventListener('click',e=>{if(e.target.closest('#uxRebuildFills'))assembleFills();});
   const referenceHeading=element('div','ux-section-heading','<span>02</span><h3>Bring in your sources</h3><button id="uxFindReferenceRecipes" hidden>Show reference recipes</button><button id="uxPullAsset">Pull from library</button>');q('#roleReferences').before(referenceHeading);
   const sourceNote=element('p','ux-source-note');sourceNote.id='uxSourceNote';referenceHeading.after(sourceNote);
-  // A text-only recipe renders no sources section (QA 3 Nov, create-14); Settings keeps one "start from a picture" link.
+  // A text-only recipe renders no sources section; the active recipe keeps one "start from a picture" link.
   // The line stays as the hidden note's text, the reason Pull from library would give (#278 friction 1).
   const NO_SOURCE_SLOT='This recipe takes no reference image. Choose a reference recipe (Qwen Atelier 1–3 references, Krea refine) to keep a source.';
   const takesSource=()=>!!selected?.reference||!!selected?.reference_slots?.length;
   q('#uxPullAsset').setAttribute('aria-describedby','uxSourceNote');
   // Switching intent selects the first reference recipe, which resets the prompt; a typed brief is asked about first.
-  q('#uxFindReferenceRecipes').onclick=()=>{const typed=q('#positive')?.value.trim();if(typed&&typed!==(selected?.defaults?.positive||'')&&!confirm('Showing reference recipes selects the first one and resets the prompt and variation count in Create. Continue?'))return;chooseIntent('edit');};
+  q('#uxFindReferenceRecipes').onclick=()=>{const typed=q('#positive')?.value.trim();if(typed&&typed!==(selected?.defaults?.positive||'')&&!confirm('Showing reference recipes selects the first one and resets the prompt and variation count in Create. Continue?'))return;chooseIntent('edit');focusReadinessTarget(selected?.reference_slots?.length?q('[data-ref-file="0"]'):q('#reference'));};
   const advanced=element('details','ux-parameters');advanced.innerHTML='<summary>Parameters & adapter stack <small>Seed, size, sampling and model controls</small></summary>';q('#controls').before(advanced);advanced.append(q('#controls'),q('#loraSlots'));advanced.open=false;
   const runBox=element('div','ux-run-box','<div class="ux-section-heading"><span>03</span><h3>Review, then run</h3></div><p id="uxRunSummary"></p><div class="ux-readiness-heading"><p id="uxReadinessSummary" role="status" aria-live="polite" aria-atomic="true"></p><button type="button" id="uxRecheckReadiness">Recheck connection</button></div><div id="uxBlockers"></div><p id="uxReadinessActionStatus" class="muted" role="status" aria-live="polite"></p><p class="muted">Generate starts this recipe. Plan comparison prepares a budgeted study; Start remains separate.</p>');q('#generate').closest('.actions').before(runBox);runBox.append(q('#generate').closest('.actions'),q('#status'));
   q('#generate').setAttribute('aria-describedby','uxRunSummary uxReadinessSummary uxBlockers');q('.dependencies').open=false;
@@ -163,7 +163,7 @@
   for(const id of ['positive','negative'])q('#'+id)?.addEventListener('input',()=>{const kept=wordingKept;if(kept?.loaded&&(wording().positive!==kept.loaded.positive||wording().negative!==kept.loaded.negative))forgetWording();});
   // Your own edit after the switch is a decision: going back would discard it, so the way back is withdrawn.
   // Every edit fires input (text, select, checkbox, file); a blur-time change after an earlier edit is not a new one.
-  q('#createView .editor')?.addEventListener('input',e=>{if(!e.isTrusted||!pictureKept)return;pictureKept=null;renderUndo();},true);
+  q('#createView .editor')?.addEventListener('input',e=>{if(e.target.closest('#workshopSaved')||!e.isTrusted||!pictureKept)return;pictureKept=null;renderUndo();},true);
   after('renderSelected',syncCreate);after('updateReady',syncReady);
   const originalUploadRoleFile=uploadRoleFile;uploadRoleFile=async function(...args){const epoch=referenceEpoch,applied=await originalUploadRoleFile(...args);if(applied&&epoch===referenceEpoch){draftDirty=true;saveDraft();}return applied;};
   // Collapse six overlapping output actions into one reviewed, compatible handoff.
@@ -248,7 +248,7 @@
     if(action==='second')target=q('#uxSecondPicture');
     if(action==='source-back'){void reattachSource();return;}
     // The wrong-environment blocker's repair is the explicit switch itself, the same Switch button Models & setup has; it never generates.
-    if(action==='switch'){const to=selected?.backend_id||'primary',name=envName(to),choice=q('#backendChoice'),go=q('#switchBackend'),say=text=>{q('#uxReadinessActionStatus').textContent=text;message(text);};
+    if(action==='switch'){const to=selected?.backend_id||'primary',name=envName(to),choice=q('#backendChoice'),go=q('#switchBackend'),say=text=>{q('#uxReadinessActionStatus').textContent=text;};
       if(!choice?.options.length)return say('Still reading the model environments. Try again in a moment.');
       if(!choice||!go||go.disabled)return say('A local operation is running. Try the switch again when it finishes.');
       choice.value=to;if(choice.value!==to)return say(name+' is not installed. Models & setup lists what it needs.');
@@ -386,7 +386,7 @@
     // Start runs exactly what was prepared: any later change to the pair, recipes, seeds or wording withdraws it.
     const fresh=!!planPrepared&&!planPrepared.started&&planPrepared.stamp===planStamp();
     q('#uxPlanStart').hidden=!fresh;q('#uxPlanStart').disabled=busy;
-    if(planPrepared&&!planPrepared.started&&!fresh&&!planPrepared.stale){planPrepared.stale=true;if(!planPrepared.failure)planStatus('Changed since preparing, so Start plan is withdrawn. Prepare again; the earlier plan stays in Compare & review, not started.');}
+    if(planPrepared&&!planPrepared.started&&!fresh&&!planPrepared.stale){planPrepared.stale=true;if(!planPrepared.failure)planStatus('Changed since preparing, so Start plan is withdrawn. Prepare again; the earlier plan stays in Comparisons, not started.');}
     // Undoing the change brings Start back with its Prepared line; the next change is announced again (#1198).
     else if(fresh&&planPrepared.stale){planPrepared.stale=false;delete planPrepared.failure;planStatus(planPrepared.message);}
   }
@@ -422,7 +422,7 @@
     let begun=false;
     try{
       const project=await post('/api/production/'+encodeURIComponent(prepared.project.id)+'/start',{});begun=true;
-      planStatus('Started. '+project.state.message+'. Each picture appears under Runs for these pictures as it finishes; the plan is in Compare & review.');
+      planStatus('Started. '+project.state.message+'. Each picture appears under Runs for these pictures as it finishes; the plan is in Comparisons.');
       await refresh();
     }catch(error){if(begun)announce('The plan started; the page could not refresh: '+error.message,true);else{prepared.started=false;prepared.failure=error.message;planStatus(error.message);announce(error.message,true);}}
     finally{planBusy=false;syncReady();syncCombinePlan();}
@@ -853,13 +853,17 @@
   q('#uxChangeRoute').onclick=()=>openHandoff(continuationState.source_asset_id,selected.id);
   q('#uxLeaveContinuation').onclick=leaveContinuation;
   async function reattachSource(){
-    if(!continuationState||pickerBusy||handoffBusy||submitting||restoring)return;
+    // This dedicated live region owns repair feedback; announce() would repeat it in the adjacent run status.
+    const status=q('#uxReadinessActionStatus'),say=text=>{status.textContent=text;};
+    if(!continuationState)return say('No continuation source is available. Reopen Continue with this asset.');
+    if(pickerBusy||handoffBusy||submitting||restoring)return say('A local operation is running. Put the source back when it finishes.');
     const claim=continuationState,stamp=JSON.stringify(claim),epoch=selectionEpoch,captured=globalThis.StudioPrivacy?.capture?.(),busyOwner={};
     const current=()=>pickerBusyOwner===busyOwner&&epoch===selectionEpoch&&(!captured||captured.revision===globalThis.StudioPrivacy?.capture?.().revision);
+    const checking='Putting the source back. No generation is requested.';status.textContent=checking;
     pickerBusyOwner=busyOwner;pickerBusy=true;syncReady();
     try{
       const result=await post('/api/assets/reference',{id:claim.source_asset_id},privacyOptions(captured));
-      if(!current())return;
+      if(!current()){if((!pickerBusyOwner||pickerBusyOwner===busyOwner)&&status.textContent===checking)status.textContent='The task changed while checking the source. Nothing was attached.';return;}
       if(stamp!==JSON.stringify(continuationState))throw Error('The task changed while the source was being put back. Nothing was attached.');
       if(result.sha256!==claim.source_sha256||result.parent_asset!==claim.source_asset_id||result.context?.sha256!==claim.source_sha256)throw Error('The library copy of the source changed. Reopen Continue with this asset.');
       // A fresh staged copy has a fresh name; the claim follows it, the identity (source hash) does not change.
@@ -868,8 +872,8 @@
       if(varyUnapplied?.stamp===stamp)varyUnapplied={...varyUnapplied,stamp:JSON.stringify(renamed)};
       continuationState=renamed;continuationSource=result.context;secondPicture=null;secondPanel.hidden=true;
       attachContinuationSource(result,false);pendingInputs.delete(StudioContinuation.sourceInput(selected.continuation_capability)==='last_reference'?'lastReference':'reference');
-      draftDirty=true;saveDraft();syncCreate();announce(StudioContinuation.sourceLabel(selected)+' holds the source again. No generation submitted.');
-    }catch(error){if(current())announce(error.message,true);}
+      draftDirty=true;saveDraft();syncCreate();say('Original picture restored to '+StudioContinuation.sourceLabel(selected)+'. No new generation was started.');
+    }catch(error){if(current())say(error.message);else if((!pickerBusyOwner||pickerBusyOwner===busyOwner)&&status.textContent===checking)status.textContent='The task changed while checking the source. Nothing was attached.';}
     finally{if(pickerBusyOwner===busyOwner){pickerBusyOwner=null;pickerBusy=false;syncReady();}}
   }
   // One slot, two pictures: the second picture is a question, not a silent replacement (owner report, 14 Sep 2026).
@@ -1563,7 +1567,8 @@
   q('#uxExportDraft').onclick=()=>{const draft=snapshot();if(!draft)return;const a=document.createElement('a'),url=URL.createObjectURL(new Blob([JSON.stringify(draft,null,2)],{type:'application/json'}));a.href=url;a.download='studio-draft-'+draft.recipe.preset+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
   window.addEventListener('storage',e=>{if(draftPrivacy==='regular'&&e.key===draftKey()){draftPaused=true;renderDraftNotice();}});
   window.addEventListener('pagehide',saveDraft);
-  for(const event of ['input','change'])q('#createView').addEventListener(event,e=>{if(e.target.closest('.editor'))draftDirty=true;syncReady();clearTimeout(draftTimer);draftTimer=setTimeout(saveDraft,350);});
+  // Naming or choosing a saved setup is library management; applying it has its own draft owner.
+  for(const event of ['input','change'])q('#createView').addEventListener(event,e=>{if(e.target.closest('#workshopSaved'))return;if(e.target.closest('.editor'))draftDirty=true;syncReady();clearTimeout(draftTimer);draftTimer=setTimeout(saveDraft,350);});
   q('#createView').addEventListener('click',e=>{if(e.target.closest('[data-variant],#randomSeed,[data-ref-clear],[data-ref-up],[data-ref-down]')){pictureKept=null;renderUndo();draftDirty=true;syncReady();saveDraft();}});
   const originalLoadSetups=loadSetups;loadSetups=async function(){try{localStorage.getItem('studio-storage-probe');}catch(_){serverSetups=await api('/api/setups');renderSaved();return;}return originalLoadSetups();};
   // Explicitly apply a reviewed Prompt Lab text handoff; never infer model bindings.
@@ -1609,7 +1614,7 @@
     const ordered=deskPlans.filter(p=>!stale(p)).slice(0,6),seenJobs=new Set((plans||[]).flatMap(p=>(p.stages||[]).map(stage=>stage.job?.id).filter(Boolean)));
     const records=ordered.map(p=>'<a class="ux-desk-row" href="'+(p.state.status==='awaiting_review'&&p.kind==='comparison'?'/review.html?project='+encodeURIComponent(p.id):p.kind==='av'?'/av.html?project='+encodeURIComponent(p.id):p.kind==='voice'?'/voice.html':'/#production')+'" data-ux-project="'+escape(p.id)+'"><span class="ux-state-dot '+escape(p.state.status)+'" aria-hidden="true"></span><span><b>'+escape(p.name)+'</b><small>'+escape(p.state.status.replaceAll('_',' '))+' · '+escape(p.kind)+'</small></span><span aria-hidden="true">↗</span></a>');
     for(const j of [...s.attentionJobs,...s.activeJobs].filter(j=>!seenJobs.has(j.id)).slice(0,3))records.push('<button type="button" class="ux-desk-row" data-ux-inspect-job="'+escape(j.id)+'"><span class="ux-state-dot '+escape(j.status)+'" aria-hidden="true"></span><span><b>'+escape(j.preset_name)+'</b><small>'+escape(deskJobHint(j))+'</small></span><span aria-hidden="true">↗</span></button>');
-    q('#uxAttention').innerHTML=(records.join('')||(plans&&runJobs?'<div class="ux-empty"><b>A clear desk.</b><p>Prepare a comparison to test one change, or start with a recipe above.</p><a href="/#create">Prepare your first pass →</a></div>':'<p>Run status is unavailable. Refresh before deciding what to start.</p>'))+(olderPlans?'<p class="ux-desk-note"><small>'+olderPlans+' plan(s) untouched for 7 days. <a href="/#production">See them under Older in Compare &amp; review</a></small></p>':'')+(s.putAwayJobs.length?'<p class="ux-desk-note"><small>'+s.putAwayJobs.length+' run(s) put away or with tracking stopped. <a href="/#create">Show put away in Create → Problems</a></small></p>':'')+(putAwayPlans?'<p class="ux-desk-note"><small>'+putAwayPlans+' plan(s) put away. <a href="/#production">Set Status to All statuses in Compare &amp; review to see them</a></small></p>':'');
+    q('#uxAttention').innerHTML=(records.join('')||(plans&&runJobs?'<div class="ux-empty"><b>A clear desk.</b><p>Prepare a comparison to test one change, or start with a recipe above.</p><a href="/#create">Prepare your first pass →</a></div>':'<p>Run status is unavailable. Refresh before deciding what to start.</p>'))+(olderPlans?'<p class="ux-desk-note"><small>'+olderPlans+' plan(s) untouched for 7 days. <a href="/#production">See them under Older in Comparisons</a></small></p>':'')+(s.putAwayJobs.length?'<p class="ux-desk-note"><small>'+s.putAwayJobs.length+' run(s) put away or with tracking stopped. <a href="/#create">Show put away in Create → Problems</a></small></p>':'')+(putAwayPlans?'<p class="ux-desk-note"><small>'+putAwayPlans+' plan(s) put away. <a href="/#production">Set Status to All statuses in Comparisons to see them</a></small></p>':'');
     const recent=assets.filter(a=>!a.trashed_at).sort((a,b)=>b.created_at-a.created_at).slice(0,6);q('#uxRecent').innerHTML=recent.map(a=>'<button class="ux-recent-card" data-ux-open-asset="'+escape(a.id)+'">'+assetPreview(a)+'<span><b>'+escape(a.title)+'</b><small>'+escape(a.media_type)+' · '+escape(({selected:'Kept',needs_work:'Needs work',rejected:'Not this',unreviewed:'Unreviewed'}[a.review||'unreviewed']||a.review))+'</small></span></button>').join('')||'<div class="ux-empty panel"><h3>'+(workspace?'Make room for your first asset.':'Asset library is unavailable.')+'</h3><p>Import an existing image or create from a recipe. Sources stay available for the next step.</p><a href="/#assets">Open Asset library →</a></div>';
   }
   function deskJobHint(j){return j.status==='uncertain'?'outcome unknown · inspect; do not run it again':U.ACTIVE.includes(j.status)?j.status+' · in progress':j.status+' · see why, then put it away';}

@@ -17,6 +17,7 @@ import studio_browser_smoke as fixture
 from asset_detail_browser import inert_page
 
 ROOT=Path(__file__).resolve().parents[1]
+REQUIRED_CHECK_IDS={f'READY-{number:02d}' for number in range(1,34)}
 
 class State:
     def __init__(self):
@@ -43,6 +44,8 @@ async def run(args):
     server=fixture.browser_server(Handler);thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     checks=[];errors=[];failure=None
     def check(id,expected,value):
+        assert id in REQUIRED_CHECK_IDS, 'Unknown readiness check: '+id
+        assert all(row['id']!=id for row in checks), 'Duplicate readiness check: '+id
         checks.append({'id':id,'expectation':expected,'passed':bool(value)});print(id,bool(value),expected,flush=True)
     try:
         async with async_playwright() as pw:
@@ -70,13 +73,18 @@ async def run(args):
             await click_existing('[data-ux-resolve="references"]',True)
             check('READY-02','Keyboard action focuses Picture 1 input without opening/uploading a file',await page.evaluate("document.activeElement.dataset.refFile==='0'"))
             check('READY-03','Input navigation preserves wording, settings and attachments',await stamp()==before)
+            action_status=page.locator('#uxReadinessActionStatus')
+            await page.locator('#workshopSettings').evaluate('(node)=>node.open=false')
+            check('READY-30','Repair result stays visible beside Generate with Settings closed',await action_status.is_visible() and 'Shown for review' in await action_status.inner_text() and await action_status.evaluate('(node)=>!!node.closest(".wk-run-dock") && !node.closest("details")'))
+            check('READY-31','Repair result keeps one original polite live region',await action_status.count()==1 and await action_status.get_attribute('role')=='status' and await action_status.get_attribute('aria-live')=='polite')
             # A filled first slot redirects the same action to the next missing slot.
             await page.evaluate("Object.assign(referenceRecords[0],{file:'fixture-first.png',missing:false});renderReferenceSlots()")
             await click_existing('[data-ux-resolve="references"]')
             check('READY-04','Action resolves the next missing slot from current state',await page.evaluate("document.activeElement.dataset.refFile==='1'"))
             await page.evaluate("document.querySelector('#referenceCards').querySelector('[data-ref-file=\"1\"]').hidden=true")
             await click_existing('[data-ux-resolve="references"]')
-            check('READY-05','Unavailable target has visible feedback rather than guessed fallback',await page.locator('#uxReadinessActionStatus').count()>0 and 'not available' in await page.locator('#uxReadinessActionStatus').inner_text())
+            await page.locator('#workshopSettings').evaluate('(node)=>node.open=false')
+            check('READY-05','Unavailable target has visible feedback rather than guessed fallback',await action_status.is_visible() and 'not available' in await action_status.inner_text())
             await page.evaluate("document.querySelector('#referenceCards').querySelector('[data-ref-file=\"1\"]').hidden=false")
             state.health['missing_models']={'qwen-3ref':['checkpoints/missing.safetensors']}
             await page.evaluate('health()')
@@ -122,9 +130,24 @@ async def run(args):
             }""") if await page.locator('#uxRecheckReadiness').count() else None
             check('READY-26','Hung connection check releases its UI with an honest timeout',deadline and deadline['enabled'] and 'timed out' in deadline['text'])
             check('READY-27','Repeated activation while checking coalesces and never retries automatically',deadline and deadline['calls']==1)
+            before_typing=await page.evaluate('()=>({width:innerWidth,height:innerHeight,settingsOpen:document.querySelector("#workshopSettings").open,checksOpen:document.querySelector("#workshopChecks").open,focus:document.activeElement.id})')
+            try:
+                await page.locator('#workshopSettings').evaluate('(node)=>node.open=false')
+                await page.set_viewport_size({'width':390,'height':500});await page.focus('#positive')
+                check('READY-32','Failed check remains visible in the compact typing dock with Settings closed',await action_status.is_visible() and 'timed out' in await action_status.inner_text())
+                await page.evaluate('()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))')
+                feedback_box=await action_status.bounding_box()
+                check('READY-33','Compact typing feedback fits inside the 390 by 500 viewport',feedback_box and feedback_box['width']>0 and feedback_box['height']>0 and feedback_box['x']>=0 and feedback_box['y']>=0 and feedback_box['x']+feedback_box['width']<=390 and feedback_box['y']+feedback_box['height']<=500)
+            finally:
+                # Restore the open readiness fold and focus as well as size: READY-18 reads its rendered summary.
+                await page.set_viewport_size({'width':before_typing['width'],'height':before_typing['height']})
+                await page.evaluate('before=>{document.querySelector("#workshopSettings").open=before.settingsOpen;document.querySelector("#workshopChecks").open=before.checksOpen;document.getElementById(before.focus)?.focus({preventScroll:true});}',before_typing)
             # Text-only recipe has no source blocker; ready is explicitly bounded, not artistic approval.
             await page.evaluate("selectPreset('anima-portrait');online=true;schemaAvailable=true;updateReady()")
             check('READY-18','Unblocked summary keeps server validation explicit',await summary.count()>0 and 'server' in await summary.inner_text() and not await page.locator('#generate').is_disabled())
+            if not checks[-1]['passed']:
+                checks[-1]['observed']=await page.evaluate('()=>({preset:selected?.id,summary:document.querySelector("#uxReadinessSummary")?.innerText,generateDisabled:document.querySelector("#generate").disabled,blockers:document.querySelector("#uxBlockers").textContent})')
+                print('READY-18 observed',json.dumps(checks[-1]['observed']),flush=True)
             await page.evaluate("selectPreset('wan22-i2v');applyI2VMode('canonical')")
             mode_block=await page.evaluate('i2vModeBlocker()')
             # Deliberately select the documented runtime hold without executing or rewriting its graph.
@@ -160,7 +183,8 @@ async def run(args):
         server.shutdown();server.server_close();thread.join(2)
         receipt={'mode':'inert storage/transport' if args.inert else 'native HTTP/browser', 'scope':'Real Studio HTML/JS/CSS, synthetic read-only readiness APIs; no ComfyUI, installation or inference.', 'checks':checks,'errors':errors,'failure':failure,'pass':sum(x['passed'] for x in checks),'fail':sum(not x['passed'] for x in checks),'gets':state.gets,'posts':fixture.POSTS,'source_sha256':{x:hashlib.sha256((ROOT/'app/static'/x).read_bytes()).hexdigest() for x in ['app.js','studio-core.js','studio-workbench.js','studio.css']}}
         (args.out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n',encoding='utf-8')
-    assert len(checks)==29 and not errors, 'Incomplete or erroneous browser run'
+    observed_ids={row['id'] for row in checks}
+    assert len(checks)==len(REQUIRED_CHECK_IDS) and observed_ids==REQUIRED_CHECK_IDS and not errors, 'Incomplete or erroneous browser run: missing='+str(sorted(REQUIRED_CHECK_IDS-observed_ids))+', unexpected='+str(sorted(observed_ids-REQUIRED_CHECK_IDS))+', errors='+str(errors)
     if not args.baseline and any(not c['passed'] for c in checks):raise SystemExit(1)
 
 if __name__=='__main__':
