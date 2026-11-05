@@ -28,7 +28,7 @@ function planDisplayName(p){
 // name is never rewritten: a machine-like name gets a short human title up front,
 // with the full stored name kept in the second line and the title attribute.
 // Anything the owner actually named keeps its display name untouched.
-function planKindNoun(p){return p?.kind==='comparison'?'Comparison':p?.kind==='av'?'Scene':p?.kind==='voice'?'Voice take':p?.kind==='native'||p?.kind==='articulated'?'Export':String(p?.kind||'Plan');}
+function planKindNoun(p){return p?.kind==='comparison'?'Comparison':p?.kind==='av'?'Scene':p?.kind==='voice'?'Voice take':p?.kind==='procedural'?'Procedural asset':p?.kind==='native'||p?.kind==='articulated'?'Export':String(p?.kind||'Plan');}
 // Provenance, not wording: Combine builds its plan name from engines and seeds (the plan carries its combine record); every
 // other plan keeps the name it was given, whatever characters it contains (#1415 review).
 function planIsMachineName(name,p){return !!(p&&p.combine&&typeof p.combine==='object');}
@@ -50,7 +50,7 @@ async function refreshProduction(force=false){
 // Your plans filters (#940): presentation over the list already fetched. They never
 // start, stop, re-read or change a plan; a hidden plan keeps its detail and records.
 const PLAN_FILTER_KEY='studio.production.filters',PLAN_RECENT_SECONDS=7*86400;
-const PLAN_TYPES={all:null,comparison:['comparison'],scene:['av'],voice:['voice'],export:['native','articulated']};
+const PLAN_TYPES={all:null,comparison:['comparison'],scene:['av'],voice:['voice'],export:['native','articulated','procedural']};
 const PLAN_TYPE_NOUNS={all:'plans',comparison:'comparisons',scene:'scenes',voice:'voice takes',export:'exports'};
 // Open work = StudioUX ACTIVE ∪ ATTENTION (studio-core.js, one source of truth) plus the two plan states that
 // wait on the owner. studio-core loads after this file, so it is read per render; the literal mirrors it for
@@ -187,6 +187,17 @@ function exportCheckCard(p){
   const next=!s.pass?'<p>Fix the source in Blender, rebuild, then check the new build.</p>':s.delivered_glb_checked?'':'<p>Rebuild to get a GLB that matches its BLEND, then check again.</p>';
   return head+'<b>'+(!s.pass?'Export check found differences':s.delivered_glb_checked?'Export check passed':'Passed, but the delivered GLB was not the one checked')+'</b>'+(items.length?'<ul>'+items.map(i=>'<li>'+esc(i)+'</li>').join('')+'</ul>':'')+next+'<small>'+esc(c.message)+' <a href="/api/production/'+p.id+'/files/parity-check/sentinel/result.json" target="_blank" rel="noopener">Open report (JSON)</a></small></aside>';
 }
+function proceduralSummary(p){
+  if(p.kind!=='procedural')return '';
+  const intent=p.procedural||{},report=p.state.procedural_verification;
+  let html='<section class="procedural-result"><h3>Procedural asset</h3><p>'+esc(String(intent.generator||'').replaceAll('_',' '))+' · Blender source, three GLB detail levels'+(intent.render?' and an inspection sheet':'')+'.</p>';
+  if(report)html+='<p class="callout">'+(report.state==='passed'?'All requested technical checks passed. Inspect the result in your engine.':'Godot import was not checked. Engine verification is incomplete.')+'</p><details><summary>Technical checks</summary><ul>'+report.gates.map(g=>'<li>'+esc(g.gate.replaceAll('_',' '))+': '+(g.passed===true?'passed':g.passed===null?'not checked':'failed')+'</li>').join('')+'</ul></details>';
+  else html+='<p class="muted">'+(intent.verify_engine?'Godot import is requested for this build.':'Godot import is not requested; engine verification will stay incomplete.')+'</p>';
+  html+='<details><summary>Prepared settings</summary><dl>'+Object.entries(intent.params||{}).map(([k,v])=>'<dt>'+esc(k.replaceAll('_',' '))+'</dt><dd>'+esc(v)+'</dd>').join('')+'</dl></details>';
+  const primary=(p.state.artifacts||[]).find(a=>a.role==='procedural-model'&&a.asset_id);
+  if(primary)html+='<p><button data-candidate-open="'+esc(primary.asset_id)+'">Open model in Library</button></p>';
+  return html+'<p><a href="/procedural.html">Prepare another asset</a></p><p class="muted">Technical completion does not record art acceptance. Retained native attempts are inspected on resume; they are never rebuilt automatically.</p></section>';
+}
 function renderProduction(){
   renderPlanList();
   const p=productionPlans.find(p=>p.id===productionId);if(!p){const groups=planGroups(productionPlans);writeProductionDetail(null,groups.recent.length+groups.older.length?'<p>Choose a plan on the left. Plans are budgeted, blind comparisons; quick side-by-sides live in Make.</p><p>Native sprite atlases, layered images and Godot projects start from selected Library assets.</p>':'<p>No plans yet. <button type="button" data-plan-comparison><b>Plan a comparison</b></button> runs one change across a few candidates and reviews them blind. For a quick side-by-side, use <a href="/#make"><b>Compare looks</b> in Make</a>.</p>');return;}
@@ -200,7 +211,7 @@ function renderProduction(){
   const notices='<p>'+esc(p.state.message)+'</p>';
   const completionNotice=picturesFirst?planCompletionNotice(p):'';
   const executionWarnings=(terminalReconciliation?'<p class="callout">Record the retained failed/partial outcome or local batch disposition. No retry or later stage will start; repairs require an explicit branch.</p>':'')+(trackingRecoveryPending?'<p class="muted">Resume is unavailable until the retained prompt observation reaches a terminal record. Its execution record and reservation remain available for inspection.</p>':'');
-  const actions='<div class="production-actions">'+(p.state.status==='planned'?'<button class="primary" data-project-action="start"'+(p.runtime_block?' disabled':'')+'>Start '+(p.kind==='comparison'?'comparison':p.kind==='voice'?'voice take':'export')+'</button>':'')+(active?'<button data-project-action="stop">Stop after current stage</button>':'')+resume+(p.kind==='comparison'&&!p.combine?'<button data-project-action="branch">Branch this study</button>':'')+(p.kind==='comparison'&&blindComparison?'<small class="muted">Full plan hidden while comparing blind. Reveal settings to download it.</small>':'<a href="/api/production/'+p.id+'/files/plan.json?download" download>Full plan</a>')+'</div>';
+  const actions='<div class="production-actions">'+(p.state.status==='planned'?'<button class="primary" data-project-action="start"'+(p.runtime_block?' disabled':'')+'>Start '+(p.kind==='comparison'?'comparison':p.kind==='voice'?'voice take':p.kind==='procedural'?'build':'export')+'</button>':'')+(active?'<button data-project-action="stop">Stop after current stage</button>':'')+resume+(p.kind==='comparison'&&!p.combine?'<button data-project-action="branch">Branch this study</button>':'')+(p.kind==='comparison'&&blindComparison?'<small class="muted">Full plan hidden while comparing blind. Reveal settings to download it.</small>':'<a href="/api/production/'+p.id+'/files/plan.json?download" download>Full plan</a>')+'</div>';
   let html='<div class="section-title"><div><span class="eyebrow">'+esc(p.kind)+'</span><h2 id="productionPlanTitle" tabindex="-1" title="'+esc(p.name)+'">'+esc(planHumanTitle(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div>'+(picturesFirst?completionNotice+executionWarnings:notices+executionWarnings+actions)+planEnvironment(p);
   if(p.kind==='comparison'){
     let timing='';
@@ -243,9 +254,10 @@ function renderProduction(){
   }else if(p.kind==='native'&&p.state.measurements)html+='<p>'+p.state.measurements.image_count+' images · '+p.state.measurements.canvas.join(' × ')+' · anchor '+p.state.measurements.anchor.join(', ')+'</p><p>Frame durations: '+p.state.measurements.durations_ms.join(' / ')+' ms</p>';
   const artifacts=p.state.artifacts||[],pack=artifacts.find(a=>a.path==='export.zip');
   if(pack)html+='<p><a class="primary artifact-download" href="'+pack.url+'?download" download>Download native source pack</a></p>';
-  html+=nativeOpenCard(p,artifacts)+exportCheckCard(p);
+  html+=nativeOpenCard(p,artifacts)+exportCheckCard(p)+proceduralSummary(p);
+  for(const a of artifacts.filter(a=>a.role==='procedural-model'))html+='<model-viewer class="native-model" camera-controls src="'+esc(a.url)+'" alt="Procedural asset at full detail"></model-viewer>';
   for(const a of artifacts.filter(a=>a.role==='animated-glb'))html+='<model-viewer class="native-model" camera-controls autoplay animation-name="ChestLidOpenHoldClose" src="'+a.url+'" alt="Articulated chest animation"></model-viewer>';
-  for(const a of artifacts.filter(a=>a.role==='inspection-render'))html+='<img class="native-inspection" src="'+a.url+'" alt="'+esc(a.path)+'">';
+  for(const a of artifacts.filter(a=>a.role==='inspection-render'))html+='<img class="native-inspection'+(p.kind==='procedural'?' procedural-inspection':'')+'" src="'+a.url+'" alt="'+esc(p.kind==='procedural'?'Four-view procedural inspection sheet':a.path)+'">';
   for(const a of artifacts.filter(a=>a.role==='comparison'||a.path==='native/atlas/atlas.png'))html+='<img class="comparison-sheet" src="'+a.url+'" alt="'+esc(a.role==='comparison'?'Candidate contact sheet':'Sprite atlas')+'">';
   if(p.state.engine)html+='<p class="callout">Godot import and timed playback verified for this export.</p>';
   if(p.state.krita)html+='<p class="callout">Krita saved and reopened this document. '+p.state.krita.kra.layers.length+' layer records retained.</p><p><a class="artifact-download" href="/api/production/'+p.id+'/files/native/krita/roundtrip.kra?download" download>Download Krita document</a></p><img class="comparison-sheet" src="/api/production/'+p.id+'/files/native/krita/export.png" alt="Image exported from the reopened Krita document">';

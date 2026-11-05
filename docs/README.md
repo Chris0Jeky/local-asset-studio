@@ -52,6 +52,7 @@ folder come first: [`README.md`](../README.md) (what the Studio is), [`CURRENT_S
 | Page | What it is |
 | --- | --- |
 | [NATIVE-EXPORTS.md](NATIVE-EXPORTS.md) | Krita, Godot and Blender handoffs driven only through configured paths |
+| [PROCEDURAL-ASSETS.md](PROCEDURAL-ASSETS.md) | Eight Blender generators, explicit build plans, Library outputs and verification limits |
 | [KRITA-ROUNDTRIP.md](KRITA-ROUNDTRIP.md) | OpenRaster roundtrip |
 | [ARTICULATED-PROP.md](ARTICULATED-PROP.md) | Authored hinged prop study |
 | [ENGINE-EVIDENCE.md](ENGINE-EVIDENCE.md) | Sprite playback and GLB gates in a real engine |

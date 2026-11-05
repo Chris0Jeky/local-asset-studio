@@ -270,7 +270,7 @@ class Studio:
             # recipe and exact prior asset set for inspection; only completed
             # publication may be indexed on restart. Legacy jobs without a
             # publication marker keep the historical recovery path.
-            if job.get("operation") in ("native.av-preview.v1","native.voice-baseline.v1") and "publication_status" in job and job["publication_status"] != "published": continue
+            if job.get("operation") in ("native.av-preview.v1","native.voice-baseline.v1","native.procedural-asset.v1") and "publication_status" in job and job["publication_status"] != "published": continue
             self.index_outputs(job, advise=False, known=known)  # Restart re-registers known outputs only; the empty-picture decode is never backfilled.
         self.parallax_finisher = parallax.Finisher(self)
         self.production = Production(self)
@@ -1304,7 +1304,7 @@ class Studio:
             raise StudioError(str(exc)) from exc
 
     def output_path(self, output, job=None):
-        if (job or {}).get('operation') in ('native.articulated-prop.v1','native.av-preview.v1','native.voice-baseline.v1'):
+        if (job or {}).get('operation') in ('native.articulated-prop.v1','native.av-preview.v1','native.voice-baseline.v1','native.procedural-asset.v1'):
             identifier=job.get('project_id','')
             if not re.fullmatch('[0-9a-f]{32}',identifier):raise StudioError('Invalid native project identity')
             base=(self.experiments/'projects'/identifier).resolve()
@@ -2077,7 +2077,8 @@ class Studio:
         for key in ('comfy_root', 'comfy_url', 'operation', 'project_id', 'preset_name'):
             if key in data and not isinstance(data[key], str): raise ValueError(f"Invalid {key}")
         output_key = {'asset.import': 'uploaded_file', tiles.OPERATION: 'run_file', parallax.OPERATION: 'run_file',
-                      'native.articulated-prop.v1': 'native_path', 'native.av-preview.v1': 'native_path', 'native.voice-baseline.v1': 'native_path'}.get(data.get('operation'))
+                      'native.articulated-prop.v1': 'native_path', 'native.av-preview.v1': 'native_path', 'native.voice-baseline.v1': 'native_path',
+                      'native.procedural-asset.v1': 'native_path'}.get(data.get('operation'))
         if output_key and any(not isinstance(output.get(output_key), str) for output in data.get('outputs', [])): raise ValueError(f"Invalid output {output_key}")
 
     @classmethod
@@ -3169,6 +3170,9 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/looks/record": return self._json(200, looks.record(self.studio, scope))
             if path == "/api/characters": return self._json(200, characters.listing(self.studio))
             if path == '/api/production': return self._json(200,self.studio.production.list())
+            if path == '/api/procedural':
+                from procedural import catalog
+                return self._json(200,catalog(self.studio))
             if path.startswith('/api/production/campaigns/') and len(path.split('/'))==5:
                 return self._json(200,self.studio.production.edit_campaign(path.split('/')[4]))
             if path == '/api/voice-baseline':
@@ -3335,6 +3339,10 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == '/api/backends/resolve-switch': return self._json(200, self.studio.backends.resolve_switch_record(self._body_object()))
             if self.path == '/api/runtime-recovery/retry': return self._json(202, self.studio.runtime_recovery.reset())
             if self.path == '/api/articulated': return self._json(201,self.studio.production.articulated(self._body_json()))
+            if self.path == '/api/procedural/validate':
+                from procedural import validate
+                return self._json(200,{'intent':validate(self._body_json()),'generation_submitted':False})
+            if self.path == '/api/procedural':return self._json(201,self.studio.production.procedural(self._body_json()))
             if urlparse(self.path).path == '/api/assets/import':
                 body=self._read_body(20*1024*1024)
                 repair={}

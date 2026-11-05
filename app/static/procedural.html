@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Procedural assets · Local Asset Studio</title><link rel="stylesheet" href="/static/style.css"><link rel="stylesheet" href="/static/studio.css"><link rel="stylesheet" href="/static/procedural.css"></head>
+<body><header class="topbar"><a class="brand" href="/">ASSET STUDIO</a><nav aria-label="Studio views"><a href="/#make">Make</a><a href="/#assets">Library</a><a href="/#production">Comparisons</a><a href="/procedural.html" aria-current="page">Procedural assets</a></nav></header>
+<main class="procedural-shell">
+  <section class="procedural-intro"><span class="eyebrow">LOCAL 3D WORKSHOP</span><h1>Build a place, one parameter at a time.</h1><p>Make rooms, props and coastal scenery from the existing Blender generators. Choose dimensions and details, prepare a plan, then start its build when you are ready.</p><p class="muted">Regular workspace · Blender source + three GLB detail levels · optional inspection sheet</p></section>
+  <div class="procedural-layout">
+    <form id="proceduralForm" class="panel">
+      <fieldset id="proceduralFields" disabled>
+        <legend>1. Shape your asset</legend>
+        <label for="proceduralName">Asset name</label><input id="proceduralName" required maxlength="120" placeholder="Harbour · evening pier" autocomplete="off">
+        <label for="proceduralGenerator">Generator</label><select id="proceduralGenerator" required aria-describedby="proceduralDescription"></select>
+        <p id="proceduralDescription" class="muted"></p><p id="proceduralUnits" class="muted"></p>
+        <div id="proceduralParams" class="procedural-params"></div>
+        <details id="proceduralConstraints" class="procedural-constraints"><summary>How the parts fit together</summary><ul id="proceduralRules"></ul></details>
+        <div class="procedural-options"><label><input id="proceduralRender" type="checkbox" checked> Render a four-view inspection sheet on the CPU</label><label><input id="proceduralGodot" type="checkbox"> Check import in configured Godot</label><small id="proceduralGodotHelp">Without this check, engine verification stays incomplete.</small></div>
+        <div class="procedural-actions"><button id="proceduralCheck" type="button">Check settings</button><button id="proceduralPrepare" class="primary" disabled>Prepare asset</button></div>
+      </fieldset>
+      <p id="proceduralStatus" role="status" aria-live="polite">Loading generators…</p>
+    </form>
+    <aside class="procedural-side">
+      <section class="panel"><div class="section-title"><h2>2. Prepare locally</h2><button id="proceduralRefresh" type="button">Check setup</button></div><div id="proceduralRuntime" aria-live="polite"></div><p class="muted">You can explore and check settings before installing the tools. Preparing saves a recipe and checks its files; it does not run Blender.</p><details><summary>Setup instructions</summary><p>Set absolute <code>blender</code> and <code>node</code> executable paths in <code>config/local.json</code>. These generators require <strong>Blender 5.4</strong>; the general example configuration may point to an older Blender.</p><p>Install the repository’s pinned Khronos validator once:</p><pre><code>npm ci --prefix tools/gltf-validation --ignore-scripts</code></pre><p>Add an absolute <code>godot</code> path to enable import checks. A detected file does not prove its application version or compatibility.</p></details></section>
+      <section class="panel"><h2>3. Start and inspect</h2><div id="proceduralPrepared"><p>Your prepared plan will appear here. Open it in Comparisons and choose <strong>Start build</strong> explicitly.</p></div><p>Finished builds appear in the Library with their recipe. Inspect the model, sheet and checks before accepting the art or using it in a game.</p><p><a href="/#production">Open Comparisons</a> · <a href="/#assets">Open Library</a></p></section>
+    </aside>
+  </div>
+</main><script src="/static/procedural.js"></script><script src="/static/studio-core.js"></script><script src="/static/studio-shell.js"></script></body></html>

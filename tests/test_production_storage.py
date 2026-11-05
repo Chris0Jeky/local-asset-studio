@@ -71,6 +71,9 @@ class ProductionStorageTests(unittest.TestCase):
         if kind=='articulated':
             with patch('articulated.prepare',return_value={'intent':{'name':'Chest'},'options':{}}):
                 return self.lab.articulated({})
+        if kind=='procedural':
+            with patch('procedural.prepare',return_value={'intent':{'name':'Pier'}}):
+                return self.lab.procedural({})
         with patch('native_exports.NativeExports') as exporter,patch('production.shutil.disk_usage',return_value=SimpleNamespace(free=100*1024**3)):
             exporter.return_value._asset_records.return_value=([],None)
             exporter.return_value._images.return_value=([],None,[])
@@ -94,7 +97,7 @@ class ProductionStorageTests(unittest.TestCase):
                 self.assertEqual(saved,self.lab.get(p['id'],full=True)['plan'])
                 self.assertFalse((self.plan_path(p).parent/project_storage.MARKER).exists())
                 self.assertEqual(p['state']['status'],'planned');self.assertEqual(p['budget']['reserved'],0)
-        self.assertEqual(self.counts(),(3,3));self.inert()
+        self.assertEqual(self.counts(),(len(project_storage.KINDS),)*2);self.inert()
 
     def test_mkdir_failure_leaves_no_startable_rows_or_budget(self):
         original=Path.mkdir
@@ -112,7 +115,7 @@ class ProductionStorageTests(unittest.TestCase):
             with self.subTest(kind=kind),patch.object(self.studio,'_write_json_atomic',side_effect=OSError('plan write')):
                 with self.assertRaisesRegex(OSError,'plan write'):self.create(kind)
                 self.assertEqual(self.counts(),(0,0))
-        self.assertEqual(len(list(self.lab.root.glob('*/.incomplete-create'))),3);self.inert()
+        self.assertEqual(len(list(self.lab.root.glob('*/.incomplete-create'))),len(project_storage.KINDS));self.inert()
 
     def test_partial_plan_write_does_not_publish_a_project(self):
         def fail(path,value):path.write_bytes(b'{');raise OSError('truncated write')
@@ -131,7 +134,7 @@ class ProductionStorageTests(unittest.TestCase):
             db.execute("CREATE TRIGGER reject_project BEFORE INSERT ON projects BEGIN SELECT RAISE(ABORT,'injected insert'); END")
         for kind in project_storage.KINDS:
             with self.subTest(kind=kind),self.assertRaisesRegex(sqlite3.IntegrityError,'injected insert'):self.create(kind)
-        self.assertEqual(self.counts(),(0,0));self.assertEqual(len(list(self.lab.root.glob('*/plan.json'))),3)
+        self.assertEqual(self.counts(),(0,0));self.assertEqual(len(list(self.lab.root.glob('*/plan.json'))),len(project_storage.KINDS))
         self.inert()
 
     def test_real_commit_failure_keeps_marker_and_rolls_back_budget(self):
@@ -140,7 +143,7 @@ class ProductionStorageTests(unittest.TestCase):
                 CREATE TRIGGER deferred_fault AFTER INSERT ON projects BEGIN INSERT INTO fail_commit VALUES ('missing'); END;""")
         for kind in project_storage.KINDS:
             with self.subTest(kind=kind),self.assertRaises(sqlite3.IntegrityError):self.create(kind)
-        self.assertEqual(self.counts(),(0,0));self.assertEqual(len(list(self.lab.root.glob('*/.incomplete-create'))),3)
+        self.assertEqual(self.counts(),(0,0));self.assertEqual(len(list(self.lab.root.glob('*/.incomplete-create'))),len(project_storage.KINDS))
         self.inert()
 
     def test_completion_failure_cannot_authorize_start(self):
@@ -152,7 +155,7 @@ class ProductionStorageTests(unittest.TestCase):
             with self.subTest(kind=kind),patch.object(Path,'unlink',fail):
                 with self.assertRaisesRegex(OSError,'marker cleanup'):self.create(kind)
         for p in self.lab.list():self.assert_blocked(p)
-        self.assertEqual(self.counts(),(3,3));self.inert()
+        self.assertEqual(self.counts(),(len(project_storage.KINDS),)*2);self.inert()
 
     def test_second_connection_never_sees_row_before_plan_readback(self):
         original=self.studio._write_json_atomic;observed=[]

@@ -1,5 +1,11 @@
 # Native exports
 
+For new 3D geometry, **More tools → Procedural assets** prepares rooms, props
+and coastal scenery from eight existing Blender generators. Its explicit
+Production plan publishes three GLBs and an optional inspection sheet to the
+Library. See [Procedural assets](PROCEDURAL-ASSETS.md) for Blender 5.4 setup,
+verification limits and recovery behavior.
+
 In Studio, select originals in **Workspace → Create native export**. Arrange the
 source order, frame durations or layer names, choose the format, and prepare the
 plan. Start it explicitly from **Experiments**. The resulting source pack includes
