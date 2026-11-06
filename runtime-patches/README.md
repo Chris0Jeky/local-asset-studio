@@ -13,7 +13,8 @@ Large charts already use the CPU sparse solver. This trades CPU time for avoidin
 the observed HIP allocation failure; it does not introduce another unwrap algorithm.
 
 The patch was prepared for ComfyUI commit
-`40c4fcdf513a4523e39d54a9d391908af8df8171`. Physical source-file SHA-256 values
+`40c4fcdf513a4523e39d54a9d391908af8df8171` and re-recorded for v0.43.2
+(`423cbd20511becb1f16122ab518e92e58bfa03d9`, 6 Nov 2026), where the same change sits one line lower. Physical source-file SHA-256 values
 before and after the change are in `comfyui-cpu-uv.json`. The untouched local
 source backup is `.runtime/comfy-uv-original.py` in this Studio checkout.
 

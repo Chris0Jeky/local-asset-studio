@@ -1,8 +1,9 @@
 diff --git a/comfy_extras/nodes_mesh_postprocess.py b/comfy_extras/nodes_mesh_postprocess.py
-index d730cbf..2f424dd 100644
+index e0d59b4cd..d6f1fc47b 100644
 --- a/comfy_extras/nodes_mesh_postprocess.py
 +++ b/comfy_extras/nodes_mesh_postprocess.py
-@@ -2642,8 +2642,9 @@ def _uv_unwrap(positions, indices, segmenter, resolution, padding, weld_distance
+@@ -2643,10 +2643,11 @@ def _uv_unwrap(positions, indices, segmenter, resolution, padding, weld_distance
+     batchable = vert_counts <= _uv_param.LSCM_BATCH_MAX_VERTS
      lscm_ids = np.nonzero(lscm_mask & batchable)[0]
      big_ids = np.nonzero(lscm_mask & ~batchable)[0]
 +    # Windows ROCm 7.2.1 / Torch 2.9.1: HIP FP64 batched LU fails; use existing CPU LSCM.
@@ -13,3 +14,4 @@ index d730cbf..2f424dd 100644
 +        device=torch.device("cpu"))
      param_done += int(lscm_ids.size)
      pbar.update_absolute(400 + (250 * param_done) // n_charts, 1000)
+ 
