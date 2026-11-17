@@ -5,7 +5,7 @@ tier and authority — live in **`CLAUDE.md`** and are not repeated here. Global
 Codex through `~/.codex/AGENTS.md` and Grok through `~/.grok/rules/00-global-laws.md` (deployed copy of
 claude-config `rules/laws.md`) plus `~/.grok/AGENTS.md`. `[compat.claude] agents` is off so `~/.claude/AGENTS.md`
 (claude-config's project file) does not leak. This file is the Codex-runtime delta; Grok also loads
-it, so the Grok section at the bottom overrides the Codex facts for Grok sessions.
+it, so the Grok section at the bottom overrides the Codex facts for Grok sessions. Grok is parked; `.grok/` stays.
 
 ## Start here
 
@@ -37,7 +37,7 @@ it, so the Grok section at the bottom overrides the Codex facts for Grok session
 - Skills: `.codex/skills/` mirrors `.claude/skills/` body-for-body; `tests/test_agent_harness.py` fails on
   drift. Change the Claude tree first, then port the body verbatim in the same commit.
 
-## Grok-specific facts
+## Grok-specific facts (parked since 2026-11-03; not used; `.grok/` kept inert until the owner retires it)
 
 - Branches from Grok sessions are named `grok/<topic>`; PRs are opened ready-for-review, never draft.
 - Project config is `.grok/config.toml` (permissions only). MCP stays user-scope in `~/.grok/config.toml`;

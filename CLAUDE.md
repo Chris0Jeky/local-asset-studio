@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 Tier: daily-driver (T2) — authority: push free / merge free. Declared in `.agent-harness/tier.json`; read it live.
-Global laws auto-load from `~/.claude/rules/laws.md`; nothing global is restated here. `AGENTS.md` is the Codex adapter; `.grok/` is the Grok adapter.
+Global laws auto-load from `~/.claude/rules/laws.md`; nothing global is restated here. `AGENTS.md` is the Codex adapter; `.grok/` (Grok adapter) is parked.
 
 ## What this is
 
@@ -43,9 +43,8 @@ command for the current list instead of a stored module count. Examples include 
 `test_model_install_safety`/`test_model_redirects`, `review_media.py` → `test_review_desk`, `host_memory.py` → `test_server`,
 `model_requirements.py` → `test_preset_model_readiness`, `project_storage.py` → `test_production_storage`, `submission_evidence.py` → `test_submission_recovery`.
 
-CI: `.github/workflows/check.yml` runs the full suite plus `validate-repo.py` on PRs, pushes to `main`, tag pushes and manual dispatch; 56 further
-path-filtered lanes in the same folder (browser drivers, graph validation, model intake/readiness, workflow MCP, …) run
-only when their files change. Agent tooling outside the Studio (comfy-cli, comfy-mcp, skills): `docs/AGENT-TOOLING.md`.
+CI: `.github/workflows/check.yml` runs the full suite plus `validate-repo.py` on PRs, pushes to `main`, tag pushes and manual dispatch; path-filtered lanes (`ls .github/workflows`;
+browser drivers, graph validation, model intake/readiness, workflow MCP, …) run only when their files change. Agent tooling outside the Studio (comfy-cli, comfy-mcp, skills): `docs/AGENT-TOOLING.md`.
 
 ## Architecture
 
@@ -91,6 +90,7 @@ is a separate offline planner and receipt checker: plans are hash-identified and
 `studio-preset-slice`, `studio-execution-evidence`, `studio-native-adapter`, `studio-runtime-models`,
 `studio-session-closeout`. Path rules auto-load from `.claude/rules/` for catalog and evidence-doc edits.
 `HUMAN_TODO.md` holds owner decisions and actions: surface open items in every summary. Tick an item only on verified completion, or when the owner answered every part and its conditions hold; record how and when. Never infer a decision or art acceptance.
+Hard: preset and graph binding, native adapters, ROCm/GPU debugging. Mechanical: catalog data, docs, tests. Models and effort: the `model-effort-routing` skill.
 
 ## PR issue disposition
 

@@ -89,3 +89,4 @@ experiments/curated/style-pose-matrix/2026-09-14-combine/research-scripts/pose3-
 docs/adaptive-studio/assets/inbox/
 docs/adaptive-studio/assets/acquired/*
 !docs/adaptive-studio/assets/acquired/MANIFEST.json
+*.stackdump

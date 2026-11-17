@@ -286,10 +286,10 @@ claude -p --strict-mcp-config --mcp-config las-blender.mcp.json --allowedTools "
 For Codex:
 
 ```bash
-codex exec -c 'mcp_servers.las_blender.command="python"' -c 'mcp_servers.las_blender.args=["scripts/blender_mcp.py","--blender","<blender.exe>","--root","<write-dir>","--blend-root","<read-dir>"]' -c 'mcp_servers.las_blender.default_tools_approval_mode="approve"' "..."
+bash ~/.claude/tools/codex_safe.sh sol high -c 'mcp_servers.las_blender.command="python"' -c 'mcp_servers.las_blender.args=["scripts/blender_mcp.py","--blender","<blender.exe>","--root","<write-dir>","--blend-root","<read-dir>"]' -c 'mcp_servers.las_blender.default_tools_approval_mode="approve"' -
 ```
 
-Without the approval override, `codex exec` blocks MCP calls under its `never` approval policy.
+Without the approval override, `codex_safe.sh` (a `codex exec` wrapper) blocks MCP calls under its `never` approval policy.
 
 Measured on 2 Nov 2026 with 5.4 alpha:
 - Claude Haiku 5.5 opened the lab asset, described it, moved `Badge`, and was refused when it tried to hide `Head`
