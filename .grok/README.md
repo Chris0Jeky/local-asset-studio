@@ -31,7 +31,7 @@ There is no `.grok/skills/` (a third copy would collide with `.claude/skills/` a
 4. Open the PR ready-for-review; triage review comments once by the global severity bar.
 5. End with `studio-session-closeout` when anything was launched or generated.
 
-## Muse swarm from this checkout
+## Muse swarm (parked: Grok is not run)
 
 A Grok session here may coordinate Muse Code: `~/.claude/skills/delegate-to-muse/SKILL.md` is the
 procedure, `py -3 ~/.claude/tools/muse_exec.py` the wrapper, `~/.claude/prompts/OVERNIGHT_MUSE_SWARM.md`
