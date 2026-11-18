@@ -585,7 +585,7 @@ the historical native benchmark results below have not been rerun or re-aggregat
 Both agents are confined to the façade. This was proved with a canary: shell, file write, file read and env access
 were all blocked, and only `blender_ping` worked.
 - **Claude** (Haiku 5.5): `--restricted --tools "" --strict-mcp-config --permission-mode dontAsk` and a scrubbed env.
-- **Codex** (GPT-6.1 Sol, medium effort): an isolated `CODEX_HOME`, shell, apps, plugins, browser and computer-use
+- **Codex** (GPT-6.2 Sol, medium effort; the canary ran on 6.1): an isolated `CODEX_HOME`, shell, apps, plugins, browser and computer-use
   disabled, read-only, and a scrubbed env.
 
 The first, unconfined harness was stopped after a red-team review, and its partial results are not used.
