@@ -4,7 +4,7 @@ the control: semantic checksum, remaining structural differences, collateral cha
 
     python scripts/blender_repair_bench.py run --blender <exe> --corpus-dir <corpus> --out-dir <new> --agent claude-haiku [--cases a,b]
 
-Agents: `claude-haiku` (Claude Code headless, Haiku 5.5) and `codex-sol` (Codex exec, GPT-6.1 Sol, secret-like
+Agents: `claude-haiku` (Claude Code headless, Haiku 5.5) and `codex-sol` (Codex exec, GPT-6.2 Sol, secret-like
 environment variables removed). Both are wired to the façade per run; nothing is written to saved settings.
 """
 from __future__ import annotations
@@ -115,7 +115,7 @@ def run_codex(prompt, workdir, blender, root, read_tree, timeout):
 
 def _run_codex(prompt, workdir, blender, root, read_tree, timeout, env):
     args = json.dumps(mcp_args(blender, root, read_tree))
-    command = [*CODEX, "exec", "-m", "gpt-6.1-sol", "-c", "model_reasoning_effort=medium", "-s", "read-only", "--skip-git-repo-check",
+    command = [*CODEX, "exec", "-m", "gpt-6.2-sol", "-c", "model_reasoning_effort=medium", "-s", "read-only", "--skip-git-repo-check",
                *[flag for feature in CODEX_DISABLED for flag in ("--disable", feature)],
                "-c", 'shell_environment_policy.exclude=["*TOKEN*","*_PAT","*PAT_*","*SECRET*","*PASSWORD*","*_KEY","*API_KEY*","*CREDENTIAL*"]',
                "-c", f"mcp_servers.las_blender.command={json.dumps(sys.executable)}", "-c", f"mcp_servers.las_blender.args={args}",
