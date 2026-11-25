@@ -1,0 +1,111 @@
+{
+  "any_gate_enabled": false,
+  "examples": {
+    "owner_labels_unavailable": {
+      "agreement": null,
+      "art_acceptance": null,
+      "blockers": [
+        "calibration_scope_unavailable",
+        "insufficient_both_label_coverage",
+        "owner_declaration_unavailable",
+        "owner_labels_unavailable",
+        "rubric_identity_unavailable"
+      ],
+      "calibration_scope": null,
+      "disagreement_ids": [],
+      "disagreements": 0,
+      "excluded_existing_marks": {},
+      "expected": 0,
+      "false_pass_ids": [],
+      "false_passes": 0,
+      "gating_enabled": false,
+      "human_review_required": true,
+      "label_counts": {},
+      "licence_clearance": null,
+      "metric_id": "owner-labels-unavailable",
+      "observed_agreement": null,
+      "owner_authenticated": false,
+      "owner_declared": false,
+      "rubric_sha256": null,
+      "scope": "Frozen cohort concordance only; local declaration is not authentication",
+      "scored": 0,
+      "status": "blocked"
+    },
+    "synthetic_inverted": {
+      "agreement": 0.0,
+      "art_acceptance": null,
+      "blockers": [
+        "calibration_scope_unavailable",
+        "metric_disagrees_with_owner_marks",
+        "owner_declaration_unavailable",
+        "rubric_identity_unavailable",
+        "synthetic_evidence_only"
+      ],
+      "calibration_scope": null,
+      "disagreement_ids": [
+        "asset-0",
+        "asset-1",
+        "asset-2",
+        "asset-3"
+      ],
+      "disagreements": 4,
+      "excluded_existing_marks": {},
+      "expected": 4,
+      "false_pass_ids": [
+        "asset-1",
+        "asset-3"
+      ],
+      "false_passes": 2,
+      "gating_enabled": false,
+      "human_review_required": true,
+      "label_counts": {
+        "keep": 2,
+        "not_this": 2
+      },
+      "licence_clearance": null,
+      "metric_id": "synthetic-rubric",
+      "observed_agreement": 0.0,
+      "owner_authenticated": false,
+      "owner_declared": false,
+      "rubric_sha256": null,
+      "scope": "Frozen cohort concordance only; local declaration is not authentication",
+      "scored": 4,
+      "status": "disabled"
+    },
+    "synthetic_perfect": {
+      "agreement": 1.0,
+      "art_acceptance": null,
+      "blockers": [
+        "calibration_scope_unavailable",
+        "owner_declaration_unavailable",
+        "rubric_identity_unavailable",
+        "synthetic_evidence_only"
+      ],
+      "calibration_scope": null,
+      "disagreement_ids": [],
+      "disagreements": 0,
+      "excluded_existing_marks": {},
+      "expected": 4,
+      "false_pass_ids": [],
+      "false_passes": 0,
+      "gating_enabled": false,
+      "human_review_required": true,
+      "label_counts": {
+        "keep": 2,
+        "not_this": 2
+      },
+      "licence_clearance": null,
+      "metric_id": "synthetic-rubric",
+      "observed_agreement": 1.0,
+      "owner_authenticated": false,
+      "owner_declared": false,
+      "rubric_sha256": null,
+      "scope": "Frozen cohort concordance only; local declaration is not authentication",
+      "scored": 4,
+      "status": "synthetic_only"
+    }
+  },
+  "owner_library_available": false,
+  "schema": "p35.calibration-demo/v1",
+  "scope": "Synthetic software demonstration. No owner images, owner labels, generations, or artistic acceptance are claimed."
+}

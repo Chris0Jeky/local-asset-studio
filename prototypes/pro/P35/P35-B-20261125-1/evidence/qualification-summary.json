@@ -1,0 +1,2212 @@
+{
+  "all_planned_trials_pass": false,
+  "axis_scores": {
+    "anatomy_contact": {
+      "mean": null,
+      "minimum": null,
+      "observed": 0
+    },
+    "composition": {
+      "mean": null,
+      "minimum": null,
+      "observed": 0
+    },
+    "identity": {
+      "mean": null,
+      "minimum": null,
+      "observed": 0
+    },
+    "outfit_detail": {
+      "mean": null,
+      "minimum": null,
+      "observed": 0
+    },
+    "pose_geometry": {
+      "mean": null,
+      "minimum": null,
+      "observed": 0
+    },
+    "style": {
+      "mean": null,
+      "minimum": null,
+      "observed": 0
+    }
+  },
+  "blockers": [
+    "human_rubric_incomplete_or_failed",
+    "missing_canon_bytes",
+    "missing_reference_bytes",
+    "missing_route_pins",
+    "no_representative_artwork_evidence",
+    "owner_calibration_unavailable_or_disabled",
+    "planned_trials_missing"
+  ],
+  "calibration": null,
+  "cost": {
+    "attempts_measured_trials": 0,
+    "attempts_observed": null,
+    "attempts_total": null,
+    "operator_seconds_measured_trials": 0,
+    "operator_seconds_observed": null,
+    "operator_seconds_total": null,
+    "peak_ram_bytes_measured_trials": 0,
+    "peak_ram_bytes_observed_max": null,
+    "peak_vram_bytes_measured_trials": 0,
+    "peak_vram_bytes_observed_max": null,
+    "retry_count_measured_trials": 0,
+    "retry_count_observed": null,
+    "retry_count_total": null,
+    "runtime_seconds_measured_trials": 0,
+    "runtime_seconds_observed": null,
+    "runtime_seconds_total": null
+  },
+  "first_pass_rubric_rate_lower_bound": 0.0,
+  "generation_submitted_by_evaluator": false,
+  "human_reviewed": 0,
+  "licence_clearance": null,
+  "owner_acceptance": null,
+  "planned": 240,
+  "qualification_complete": false,
+  "routes": {
+    "klein4-reference": {
+      "all_planned_trials_pass": false,
+      "axis_scores": {
+        "anatomy_contact": {
+          "mean": null,
+          "minimum": null,
+          "observed": 0
+        },
+        "composition": {
+          "mean": null,
+          "minimum": null,
+          "observed": 0
+        },
+        "identity": {
+          "mean": null,
+          "minimum": null,
+          "observed": 0
+        },
+        "outfit_detail": {
+          "mean": null,
+          "minimum": null,
+          "observed": 0
+        },
+        "pose_geometry": {
+          "mean": null,
+          "minimum": null,
+          "observed": 0
+        },
+        "style": {
+          "mean": null,
+          "minimum": null,
+          "observed": 0
+        }
+      },
+      "families": {
+        "contact-heavy": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "dynamic-action": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "floor": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "foreshortened": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "lying": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "multi-character": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "occluded": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "ordinary": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "seated": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "unusual": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        }
+      },
+      "first_pass_rubric_rate_lower_bound": 0.0,
+      "human_reviewed": 0,
+      "planned": 60,
+      "qualification_complete": false,
+      "resource_evidence_complete": false,
+      "rubric_pass_rate_lower_bound": 0.0,
+      "rubric_passed": 0,
+      "status_counts": {
+        "cancelled": 0,
+        "completed": 0,
+        "failed": 0,
+        "missing": 60,
+        "submission_uncertain": 0,
+        "unsupported": 0
+      }
+    },
+    "klein9-copy-pose": {
+      "all_planned_trials_pass": false,
+      "axis_scores": {
+        "anatomy_contact": {
+          "mean": null,
+          "minimum": null,
+          "observed": 0
+        },
+        "composition": {
+          "mean": null,
+          "minimum": null,
+          "observed": 0
+        },
+        "identity": {
+          "mean": null,
+          "minimum": null,
+          "observed": 0
+        },
+        "outfit_detail": {
+          "mean": null,
+          "minimum": null,
+          "observed": 0
+        },
+        "pose_geometry": {
+          "mean": null,
+          "minimum": null,
+          "observed": 0
+        },
+        "style": {
+          "mean": null,
+          "minimum": null,
+          "observed": 0
+        }
+      },
+      "families": {
+        "contact-heavy": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "dynamic-action": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "floor": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "foreshortened": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "lying": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "multi-character": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "occluded": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "ordinary": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "seated": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "unusual": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        }
+      },
+      "first_pass_rubric_rate_lower_bound": 0.0,
+      "human_reviewed": 0,
+      "planned": 60,
+      "qualification_complete": false,
+      "resource_evidence_complete": false,
+      "rubric_pass_rate_lower_bound": 0.0,
+      "rubric_passed": 0,
+      "status_counts": {
+        "cancelled": 0,
+        "completed": 0,
+        "failed": 0,
+        "missing": 60,
+        "submission_uncertain": 0,
+        "unsupported": 0
+      }
+    },
+    "klein9-skeleton": {
+      "all_planned_trials_pass": false,
+      "axis_scores": {
+        "anatomy_contact": {
+          "mean": null,
+          "minimum": null,
+          "observed": 0
+        },
+        "composition": {
+          "mean": null,
+          "minimum": null,
+          "observed": 0
+        },
+        "identity": {
+          "mean": null,
+          "minimum": null,
+          "observed": 0
+        },
+        "outfit_detail": {
+          "mean": null,
+          "minimum": null,
+          "observed": 0
+        },
+        "pose_geometry": {
+          "mean": null,
+          "minimum": null,
+          "observed": 0
+        },
+        "style": {
+          "mean": null,
+          "minimum": null,
+          "observed": 0
+        }
+      },
+      "families": {
+        "contact-heavy": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "dynamic-action": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "floor": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "foreshortened": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "lying": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "multi-character": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "occluded": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "ordinary": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "seated": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "unusual": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        }
+      },
+      "first_pass_rubric_rate_lower_bound": 0.0,
+      "human_reviewed": 0,
+      "planned": 60,
+      "qualification_complete": false,
+      "resource_evidence_complete": false,
+      "rubric_pass_rate_lower_bound": 0.0,
+      "rubric_passed": 0,
+      "status_counts": {
+        "cancelled": 0,
+        "completed": 0,
+        "failed": 0,
+        "missing": 60,
+        "submission_uncertain": 0,
+        "unsupported": 0
+      }
+    },
+    "qwen-3ref": {
+      "all_planned_trials_pass": false,
+      "axis_scores": {
+        "anatomy_contact": {
+          "mean": null,
+          "minimum": null,
+          "observed": 0
+        },
+        "composition": {
+          "mean": null,
+          "minimum": null,
+          "observed": 0
+        },
+        "identity": {
+          "mean": null,
+          "minimum": null,
+          "observed": 0
+        },
+        "outfit_detail": {
+          "mean": null,
+          "minimum": null,
+          "observed": 0
+        },
+        "pose_geometry": {
+          "mean": null,
+          "minimum": null,
+          "observed": 0
+        },
+        "style": {
+          "mean": null,
+          "minimum": null,
+          "observed": 0
+        }
+      },
+      "families": {
+        "contact-heavy": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "dynamic-action": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "floor": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "foreshortened": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "lying": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "multi-character": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "occluded": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "ordinary": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "seated": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        },
+        "unusual": {
+          "all_planned_trials_pass": false,
+          "axis_scores": {
+            "anatomy_contact": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "composition": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "identity": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "outfit_detail": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "pose_geometry": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            },
+            "style": {
+              "mean": null,
+              "minimum": null,
+              "observed": 0
+            }
+          },
+          "first_pass_rubric_rate_lower_bound": 0.0,
+          "human_reviewed": 0,
+          "planned": 6,
+          "rubric_pass_rate_lower_bound": 0.0,
+          "rubric_passed": 0,
+          "status_counts": {
+            "cancelled": 0,
+            "completed": 0,
+            "failed": 0,
+            "missing": 6,
+            "submission_uncertain": 0,
+            "unsupported": 0
+          }
+        }
+      },
+      "first_pass_rubric_rate_lower_bound": 0.0,
+      "human_reviewed": 0,
+      "planned": 60,
+      "qualification_complete": false,
+      "resource_evidence_complete": false,
+      "rubric_pass_rate_lower_bound": 0.0,
+      "rubric_passed": 0,
+      "status_counts": {
+        "cancelled": 0,
+        "completed": 0,
+        "failed": 0,
+        "missing": 60,
+        "submission_uncertain": 0,
+        "unsupported": 0
+      }
+    }
+  },
+  "rubric_pass_rate_lower_bound": 0.0,
+  "rubric_passed": 0,
+  "scope": "Paired case/seed evidence; unsupported, failed, cancelled, uncertain and missing trials stay visible",
+  "status_counts": {
+    "cancelled": 0,
+    "completed": 0,
+    "failed": 0,
+    "missing": 240,
+    "submission_uncertain": 0,
+    "unsupported": 0
+  },
+  "suite_sha256": "7e5e0c23f6889fadc0964f190e8629dba2d11b2e44bcfec523c3ecfcb333dcd5"
+}

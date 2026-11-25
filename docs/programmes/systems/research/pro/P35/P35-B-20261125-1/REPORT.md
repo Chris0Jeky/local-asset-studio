@@ -2,6 +2,8 @@
 
 **Lane P35 · Part B · 25 November 2026 · pinned base 0270760a**
 
+[Implementation PR #2047](https://github.com/Chris0Jeky/local-asset-studio/pull/2047) · [Prototype and owner commands](https://github.com/Chris0Jeky/local-asset-studio/blob/pro/P35-B-20261125-1/prototypes/pro/P35/P35-B-20261125-1/README.md) · [Adoption plan](https://github.com/Chris0Jeky/local-asset-studio/blob/pro/P35-B-20261125-1/prototypes/pro/P35/P35-B-20261125-1/ADOPTION.md) · [Verification receipt](https://github.com/Chris0Jeky/local-asset-studio/blob/pro/P35-B-20261125-1/prototypes/pro/P35/P35-B-20261125-1/verification.json)
+
 ## Decision and delivered result
 
 Keep Copy Pose as the inherited leader while running a deliberately bounded comparison. The implemented package makes native reference order, unsupported role combinations, frozen route/model/input identities, uncertain dispatch and owner-calibration failures inspectable. It provides a 12-cell owner smoke and a complete 240-cell authored qualification matrix. It does **not** establish a new artistic winner or a 16 GB fit guarantee.
@@ -43,7 +45,7 @@ From a full pinned Studio repository, the one-command reproduction is:
 py -3 prototypes/pro/P35/P35-B-20261125-1/run.py verify --source-root .
 ```
 
-The build ran on Linux with Python 3.12.14 using selected source files read through the GitHub connector, not a cloned/copied repository. No compiler was invoked and there were no compiler flags. `verification.json` and `EVIDENCE.md` record the final test count, exact environment, commands and source-check limits. The check compares eight prepared variants from actual pinned Studio preparation methods and runs independent four-route/two-seed-count CLI/HTTP integration tests. Worker admission, image decoding, input staging and live model availability are explicit stubs; synthetic fixtures contain no actual images. The Windows/MSVC environment, batch launcher, power-loss durability, HIP kernels, live schemas, actual VRAM/RAM/timing, visual quality and owner calibration remain unverified.
+The final one-command check passed **126 tests, zero failures/errors/skips**, with **eight native prepared-graph comparisons** and **four deterministic output hashes matching**. It ran at 02:41:56 UTC on 25 November 2026 on Linux 6.18.57 x86_64 with Python 3.12.14 (Clang 22.1.3 build), using selected source files read through the GitHub connector, not a cloned/copied repository. No compiler was invoked and there were no compiler flags. `verification.json` and `EVIDENCE.md` record the final test count, exact environment, commands and source-check limits. The check compares eight prepared variants from actual pinned Studio preparation methods and runs independent four-route/two-seed-count CLI/HTTP integration tests. Worker admission, image decoding, input staging and live model availability are explicit stubs; synthetic fixtures contain no actual images. The Windows/MSVC environment, batch launcher, power-loss durability, HIP kernels, live schemas, actual VRAM/RAM/timing, visual quality and owner calibration remain unverified.
 
 The full repository proving commands are the separate existing GitHub CI gates: `python -m unittest discover -s tests` and `python scripts/validate-repo.py`. No app/catalog change is part of this prototype; do not describe the isolated checks as the whole repository suite. Final CI status is retained on the pull request and in the verification notes where available.
 
