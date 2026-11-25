@@ -4,7 +4,7 @@ lane: P35
 part: B
 base: 0270760a
 phase: building
-updated: 2026-11-25T02:32Z
+updated: 2026-11-25T02:38Z
 
 ## Items
 - [x] 1. Read pinned Studio contracts and existing reference routes; define kill criteria and qualification design. (commit 4c78d25)
@@ -14,7 +14,7 @@ updated: 2026-11-25T02:32Z
 - [ ] 5. Publish report, adoption instructions, deterministic hashes and verified branch inventory; mark PR ready.
 
 ## Next
-The four exact source graphs, role-aware planner and 29 planner tests are checkpointed; prospective protocols freeze before trial hashes, and smoke budgets now cover 90 minutes including headroom. Integrate and push owner_run.py with the separate bounded preparation timeout, its tests/API contract, source_contract_check.py and run.py. Then reproduce deterministic evidence, add README.md/ADOPTION.md and research report, verify branch inventory and mark ready. Current assembled checks passed 107 tests on Linux Python 3.12; no live Studio, GPU, owner marks or image review was used. Read this branch first after workspace loss.
+Planner and four exact native graph recipes were pushed in 6e915a0. This checkpoint adds the durable loopback Production adapter, independent source-preparation checks and compiler/adapter integration tests; 115 assembled tests passed on Linux, including all four routes with two/three seeds and Unicode prompts. The NUL prompt readiness regression is fixed. Finish the independent review of run.py's receipt/plan crosslinks and failed-verification log retention, then push run.py, launcher, fixtures, deterministic evidence and docs. README/ADOPTION/report are drafted locally but not yet on this branch. No app/catalog/runtime change, GPU generation or owner review is claimed.
 
 ## Not pushed yet
 - (none)

@@ -145,7 +145,7 @@ def owner_template(suite):
 
 
 def _text(value, label, limit=1500):
-    if not isinstance(value, str) or not value.strip() or len(value) > limit:
+    if not isinstance(value, str) or not value.strip() or len(value) > limit or '\x00' in value:
         raise ValueError(label + ' is missing or too long')
     return value.strip()
 
