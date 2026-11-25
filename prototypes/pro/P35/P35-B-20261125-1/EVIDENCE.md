@@ -73,7 +73,7 @@ python -m unittest discover -s tests
 python scripts/validate-repo.py
 ```
 
-Those commands were **not run locally against the selected source subset**. The repository's existing **Check studio** GitHub Actions workflow runs the full offline suite through `tests/check_full_suite_lifetime.py` (which invokes unittest discovery) with a 1,200-second resource-lifetime budget, followed by `python scripts/validate-repo.py`, on Ubuntu/Python 3.12. Its status is separate from the 126 prototype tests and is reported on PR #2047. No full-suite pass is inferred from source checks or an in-progress CI run.
+Those commands were **not run locally against the selected source subset**. The repository's existing **Check studio** GitHub Actions workflow runs the full offline suite through `tests/check_full_suite_lifetime.py` (which invokes unittest discovery) with a 1,200-second resource-lifetime budget, followed by `python scripts/validate-repo.py`, on Ubuntu/Python 3.12. Its status is separate from the 128 prototype tests and is reported on PR #2047. No full-suite pass is inferred from source checks or an in-progress CI run.
 
 ## Remaining uncertainty
 
