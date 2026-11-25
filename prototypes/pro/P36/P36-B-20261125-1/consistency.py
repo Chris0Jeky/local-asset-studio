@@ -217,6 +217,8 @@ def score_sheet(anchor_features: dict, sheet: dict, policy: dict, stage: str) ->
             view_error = "view_hash_invalid"
         elif type(features) is not dict or len(features) > MAX_FEATURES:
             view_error = "view_features_invalid"
+        elif any(not _name(name) for name in features):
+            view_error = "view_feature_name_invalid"
         elif media_sha in used_media:
             view_error = "duplicate_required_media"
         else:
@@ -225,7 +227,7 @@ def score_sheet(anchor_features: dict, sheet: dict, policy: dict, stage: str) ->
             result["blockers"].append(view_error + ":" + view_id)
         if type(features) is dict:
             result["ignored_features"].extend(
-                view_id + ":" + name for name in sorted(name for name in features if type(name) is str)
+                view_id + ":" + name for name in sorted(name for name in features if _name(name))
                 if name not in required[view_id])
 
         for name in sorted(required[view_id]):

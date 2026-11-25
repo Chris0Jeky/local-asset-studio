@@ -11,7 +11,7 @@ import copy
 import hashlib
 import json
 import math
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 import re
 import sys
 
@@ -112,6 +112,8 @@ def safe_relative(path):
     reserved = {'CON', 'PRN', 'AUX', 'NUL', *(f'COM{i}' for i in range(1, 10)),
                 *(f'LPT{i}' for i in range(1, 10))}
     require(not any(x.split('.')[0].upper() in reserved for x in parts), 'Windows reserved path')
+    require(not any(PureWindowsPath(x).is_reserved() or x.upper() in ('CONIN$', 'CONOUT$') or
+                    x.split('.')[0].upper() in ('CONIN$', 'CONOUT$') for x in parts), 'Windows reserved path')
     require(not any(any(c in '<>"|?*' for c in x) for x in parts), 'Nonportable path character')
     require(not any(x.lower() in ('_owner', 'owner-models') for x in parts), 'Private owner path refused')
     return PurePosixPath(path)
@@ -123,6 +125,7 @@ def linked(path): return path.is_symlink() or getattr(path, 'is_junction', lambd
 def contained_file(root, relative):
     safe_relative(relative)
     root = Path(root).absolute()
+    require(not any(part.lower() in ('_owner', 'owner-models') for part in root.parts), 'Private owner root refused')
     require(not any(linked(p) for p in (root, *root.parents)), 'Linked asset root refused')
     path = root.joinpath(*relative.split('/'))
     require(not any(linked(p) for p in (path, *path.parents)), 'Linked asset path refused')
@@ -207,6 +210,9 @@ def validate_family(family):
     require(type(family.get('receipts')) is dict and len(family['receipts']) <= MAX_RECEIPTS,
             'Receipt collection exceeds bound')
     require(type(family.get('heads')) is dict and set(family['heads']) <= set(STAGES), 'Invalid stage heads')
+    for identifier, receipt in family['receipts'].items():
+        validate_receipt(receipt); _scope(family, receipt)
+        require(identifier == receipt['id'], 'Historical receipt digest mismatch')
     for stage, identifier in family['heads'].items():
         require(type(identifier) is str and identifier in family['receipts'], 'Missing active receipt')
         receipt = family['receipts'][identifier]
@@ -229,6 +235,17 @@ def _scope(family, receipt):
     payload = receipt['payload']
     for key in ('family_id', 'workspace_id', 'character_id', 'mode', 'policy_sha256'):
         require(payload.get(key) == family[key], 'Receipt scope mismatch: ' + key)
+    if family['mode'] == 'production':
+        require(payload['recipe'].get('fixture') is not True and
+                not payload['recipe']['route_id'].startswith(('fixture', 'synthetic')),
+                'Explicit synthetic recipe cannot qualify production')
+        for artifact in payload['artifacts']:
+            require(not artifact.get('source', '').startswith('fixture:') and
+                    not artifact['asset_id'].startswith('fixture-') and
+                    not artifact['licence']['source'].startswith('fixture:'),
+                    'Explicit synthetic artifact cannot qualify production')
+        require(not any(check['evidence_ref'].startswith('fixture:') for check in payload['quality']),
+                'Explicit synthetic quality evidence cannot qualify production')
 
 
 def validate_receipt(receipt):
@@ -279,6 +296,13 @@ def validate_receipt(receipt):
                 'Invalid role-bound reference')
     require(type(payload.get('identity')) is dict and type(payload.get('quality')) is list,
             'Missing identity/native evidence')
+    require(len(payload['quality']) <= 32, 'Too many quality observations')
+    quality_names = set()
+    for check in payload['quality']:
+        require(type(check) is dict and type(check.get('name')) is str and ENTITY.fullmatch(check['name'])
+                and check['name'] not in quality_names and check.get('outcome') in ('pass', 'fail', 'unknown')
+                and type(check.get('evidence_ref')) is str and check['evidence_ref'], 'Invalid native quality evidence')
+        quality_names.add(check['name'])
     for dimension, allowed in STATES.items():
         evidence = receipt.get(dimension)
         require(type(evidence) is dict and evidence.get('state') in allowed, 'Invalid ' + dimension + ' state')
@@ -293,10 +317,10 @@ def validate_receipt(receipt):
                     and evidence['intended_use'], 'Clearance needs an owner decision for a named use')
 
 
-def prepare_receipt(family, stage, *, artifacts, recipe, references, identity, quality=None):
+def prepare_receipt(family, stage, *, artifacts, recipe, references, identity, quality=None, asset_root=None):
     validate_family(family)
     require(stage in STAGES, 'Unsupported stage')
-    gate = next_gate(family, stage)
+    gate = next_gate(family, stage, asset_root=asset_root)
     require(gate['passed'], 'Next stage blocked: ' + ', '.join(b['code'] for b in gate['blockers']), 'stage_blocked')
     payload = {key: family[key] for key in ('family_id', 'workspace_id', 'character_id', 'mode', 'policy_sha256')}
     payload.update(stage=stage, parents={s: family['heads'][s] for s in PARENTS[stage]},
@@ -323,21 +347,54 @@ def attest(receipt, dimension, state, actor, evidence_ref, *, intended_use=None)
     return out
 
 
-def record_receipt(family, receipt):
+def record_receipt(family, receipt, *, asset_root=None):
     validate_family(family); validate_receipt(receipt); _scope(family, receipt)
     stage = receipt['payload']['stage']
+    require(family['mode'] != 'production' or asset_root is not None,
+            'Production receipt admission requires an explicit asset root and fresh media verification')
     if receipt['id'] in family['receipts']:
         require(family['receipts'][receipt['id']] == receipt, 'Immutable receipt conflict')
         require(family['heads'].get(stage) == receipt['id'], 'Historical receipt requires a new explicit revision')
+        if asset_root is not None:
+            from pack_export import verify_family_media
+            verify_family_media(family, asset_root, stages={stage})
         return copy.deepcopy(family)
     require(len(family['receipts']) < MAX_RECEIPTS, 'Family receipt limit reached; archive explicitly')
     expected = {s: family['heads'].get(s) for s in PARENTS[stage]}
     require(receipt['payload']['parents'] == expected, 'Receipt parents are stale or missing')
-    gate = next_gate(family, stage)
+    gate = next_gate(family, stage, asset_root=asset_root)
     require(gate['passed'], 'Next stage blocked: ' + ', '.join(b['code'] for b in gate['blockers']), 'stage_blocked')
     out = copy.deepcopy(family)
     out['receipts'][receipt['id']] = copy.deepcopy(receipt); out['heads'][stage] = receipt['id']
     canonical_bytes(out)
+    if asset_root is not None:
+        from pack_export import verify_family_media
+        verify_family_media(out, asset_root, stages={stage})
+    return out
+
+
+def resolve_uncertain(family, stage, outcome, prompt_ref, observation_ref, *, asset_root=None):
+    """Record external observation of the exact retained attempt; never resubmit.
+
+    This is a receipt operation only. It does not query ComfyUI or prove the caller's
+    observation authentic. Production integration must use retained Studio history.
+    """
+    validate_family(family)
+    require(stage in family['heads'] and outcome in ('completed', 'failed'), 'Invalid uncertainty resolution')
+    receipt = family['receipts'][family['heads'][stage]]
+    require(receipt['generation']['state'] == 'uncertain', 'Stage is not uncertain')
+    require(type(prompt_ref) is str and prompt_ref == receipt['generation'].get('evidence_ref'),
+            'Uncertainty resolution must retain the exact prompt reference')
+    require(type(observation_ref) is str and observation_ref, 'External history observation is required')
+    require(len(family['receipts']) < MAX_RECEIPTS, 'Family receipt limit reached')
+    require(family['mode'] != 'production' or asset_root is not None, 'Production resolution needs media verification')
+    resolved = attest(receipt, 'generation', outcome, receipt['generation']['actor'], prompt_ref)
+    resolved['generation']['observation_ref'] = observation_ref
+    resolved['generation']['resolves_receipt'] = receipt['id']; resolved = seal(resolved)
+    out = copy.deepcopy(family); out['receipts'][resolved['id']] = resolved; out['heads'][stage] = resolved['id']
+    if asset_root is not None and outcome == 'completed':
+        from pack_export import verify_family_media
+        verify_family_media(out, asset_root, stages={stage})
     return out
 
 
@@ -412,14 +469,34 @@ def assess(family, stage, *, require_licence=False, intended_use=None):
             'licence_gate_requested': require_licence, 'intended_use': intended_use}
 
 
-def next_gate(family, stage):
+def next_gate(family, stage, *, asset_root=None):
     validate_family(family); require(stage in STAGES, 'Unsupported stage')
     blockers = []
+    current = family['receipts'].get(family['heads'].get(stage), {})
+    if current.get('generation', {}).get('state') == 'uncertain':
+        blockers.append({'code': 'uncertain_submission', 'stage': stage,
+                         'detail': 'Observe the retained prompt; a fresh submission is blocked'})
     for parent in PARENTS[stage]:
         blockers.extend(assess(family, parent)['blockers'])
+    closure = set()
+    def ancestors(node):
+        for parent in PARENTS[node]:
+            if parent not in closure:
+                closure.add(parent); ancestors(parent)
+    ancestors(stage)
+    media_verified = False
+    if asset_root is None and family['mode'] == 'production' and closure:
+        blockers.append({'code': 'media_verification_required', 'stage': stage})
+    elif asset_root is not None and closure and not blockers:
+        try:
+            from pack_export import verify_family_media
+            verify_family_media(family, asset_root, stages=closure)
+            media_verified = True
+        except (ValueError, OSError, KeyError, TypeError) as exc:
+            blockers.append({'code': 'media_verification_failed', 'stage': stage, 'detail': str(exc)})
     unique = {digest(b): b for b in blockers}
     return {'stage': stage, 'passed': not unique, 'blockers': list(unique.values()),
-            'generation_submitted': False, 'action': 'prepare-only'}
+            'generation_submitted': False, 'action': 'prepare-only', 'media_bytes_verified': media_verified}
 
 
 def main(argv=None):
@@ -431,22 +508,40 @@ def main(argv=None):
     for name in ('check', 'next'):
         item = sub.add_parser(name); item.add_argument('--family', required=True)
         item.add_argument('--stage', choices=STAGES, required=True)
+        item.add_argument('--asset-root')
         if name == 'check':
             item.add_argument('--require-licence', action='store_true'); item.add_argument('--intended-use')
     record = sub.add_parser('record'); record.add_argument('--family', required=True)
     record.add_argument('--receipt', required=True); record.add_argument('--out', required=True)
+    record.add_argument('--asset-root')
+    resolve = sub.add_parser('resolve'); resolve.add_argument('--family', required=True)
+    resolve.add_argument('--stage', choices=STAGES, required=True)
+    resolve.add_argument('--outcome', choices=('completed', 'failed'), required=True)
+    resolve.add_argument('--prompt-ref', required=True); resolve.add_argument('--observation-ref', required=True)
+    resolve.add_argument('--asset-root'); resolve.add_argument('--out', required=True)
     args = parser.parse_args(argv)
     try:
         if args.command == 'init':
             result = create_family(args.family_id, args.workspace_id, args.character_id, load_json(args.policy))
             write_new_runtime(args.out, result)
         elif args.command == 'record':
-            result = record_receipt(load_json(args.family), load_json(args.receipt))
+            result = record_receipt(load_json(args.family), load_json(args.receipt), asset_root=args.asset_root)
             write_new_runtime(args.out, result)
-        elif args.command == 'next': result = next_gate(load_json(args.family), args.stage)
+        elif args.command == 'resolve':
+            result = resolve_uncertain(load_json(args.family), args.stage, args.outcome, args.prompt_ref,
+                                       args.observation_ref, asset_root=args.asset_root)
+            write_new_runtime(args.out, result)
+        elif args.command == 'next': result = next_gate(load_json(args.family), args.stage, asset_root=args.asset_root)
         else:
-            result = assess(load_json(args.family), args.stage, require_licence=args.require_licence,
+            family = load_json(args.family)
+            result = assess(family, args.stage, require_licence=args.require_licence,
                             intended_use=args.intended_use)
+            if args.asset_root:
+                from pack_export import verify_family_media
+                verify_family_media(family, args.asset_root); result['media_bytes_verified'] = True
+            elif family['mode'] == 'production':
+                result['passed'] = False
+                result['blockers'].append({'code': 'media_verification_required', 'stage': args.stage})
         sys.stdout.buffer.write(canonical_bytes(result))
         return 0 if result.get('passed', True) else 2
     except (PipelineError, OSError, KeyError, TypeError, RecursionError) as exc:

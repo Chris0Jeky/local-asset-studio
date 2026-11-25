@@ -220,5 +220,45 @@ class FamilyTests(unittest.TestCase):
             with self.subTest(raw=raw), self.assertRaises(self.p.PipelineError):
                 self.p.decode_json(raw)
 
+    def test_uncertain_stage_cannot_be_replaced_by_fresh_submission(self):
+        self.add('concept')
+        receipt = self.receipt('turnaround')
+        receipt = self.p.attest(receipt, 'generation', 'uncertain', 'fixture', 'prompt:retained')
+        self.family = self.p.record_receipt(self.family, receipt)
+        with self.assertRaisesRegex(self.p.PipelineError, 'uncertain|blocked'):
+            self.receipt('turnaround')
+
+    def test_uncertainty_can_only_resolve_same_payload_and_prompt(self):
+        self.add('concept')
+        receipt = self.receipt('turnaround')
+        receipt = self.p.attest(receipt, 'generation', 'uncertain', 'fixture', 'prompt:retained')
+        self.family = self.p.record_receipt(self.family, receipt)
+        with self.assertRaises(self.p.PipelineError):
+            self.p.resolve_uncertain(self.family, 'turnaround', 'completed', 'prompt:other',
+                                     'fixture:history-confirmation')
+        resolved = self.p.resolve_uncertain(self.family, 'turnaround', 'completed', 'prompt:retained',
+                                            'fixture:history-confirmation')
+        active = resolved['receipts'][resolved['heads']['turnaround']]
+        self.assertEqual(active['payload'], receipt['payload'])
+        self.assertEqual(active['generation']['evidence_ref'], 'prompt:retained')
+        self.assertEqual(active['generation']['observation_ref'], 'fixture:history-confirmation')
+        self.assertTrue(self.p.assess(resolved, 'turnaround')['passed'])
+
+    def test_unreferenced_history_tampering_is_detected(self):
+        old = self.add('concept')
+        r = self.receipt('concept'); r['payload']['recipe']['controls']['seed'] = '4'
+        r = self.p.seal(r)
+        self.family = self.p.record_receipt(self.family, r)
+        self.family['receipts'][old['id']]['payload']['recipe']['controls']['seed'] = 'tampered'
+        with self.assertRaises(self.p.PipelineError):
+            self.p.assess(self.family, 'concept')
+
+    def test_native_quality_reference_requires_nonempty_text(self):
+        self.through('mesh')
+        for value in (1, {'not': 'a reference'}, '', None):
+            r = self.receipt('rig'); r['payload']['quality'][0]['evidence_ref'] = value
+            with self.subTest(value=value), self.assertRaises(self.p.PipelineError):
+                self.p.record_receipt(self.family, self.p.seal(r))
+
 
 if __name__ == '__main__': unittest.main()

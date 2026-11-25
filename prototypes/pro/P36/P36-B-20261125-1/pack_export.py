@@ -8,12 +8,12 @@ from pathlib import Path
 import struct
 import sys
 
-from pipeline import (PipelineError, STAGES, REPO_ROOT, assess, canonical_bytes,
+from pipeline import (PipelineError, STAGES, REPO_ROOT, assess, canonical_bytes, decode_json,
                       digest, linked, load_json, require, validate_family,
                       verify_artifact, write_new_runtime)
 
 
-def verify_family_media(family, asset_root):
+def verify_family_media(family, asset_root, *, stages=None):
     """Reopen every active artifact and remeasure pixel-labelled observations.
 
 Annotations remain assertions bound to bytes; we do not claim to measure face
@@ -24,6 +24,7 @@ geometry or authenticate who annotated or accepted it. No cached score is truste
     validate_family(family)
     paths, measured, seen_paths = {}, {}, {}
     for stage in STAGES:
+        if stages is not None and stage not in stages: continue
         if stage not in family['heads']: continue
         receipt = family['receipts'][family['heads'][stage]]; payload = receipt['payload']
         by_sha = {}
@@ -37,11 +38,18 @@ geometry or authenticate who annotated or accepted it. No cached score is truste
             paths[(stage, artifact['key'])] = path
             by_sha[artifact['sha256']] = (path, artifact)
             if artifact['media_type'].startswith('image/'):
+                require(artifact['colour_space'] == 'srgb' and artifact['alpha'] in ('opaque', 'straight'),
+                        'Unsupported image encoding: normalize to encoded sRGB with straight alpha first')
                 with Image.open(path) as image:
                     require(list(image.size) == artifact['dimensions'], 'Image dimensions differ from receipt')
+                    require(image.width <= 4096 and image.height <= 4096 and image.width * image.height <= 16*1024*1024,
+                            'Identity image exceeds decode bounds')
+                    require(not image.info.get('icc_profile'), 'Unsupported embedded colour encoding profile')
                     require(getattr(image, 'n_frames', 1) == 1, 'Animated sheet unsupported')
                     image.verify()
         for view in payload['identity']['sheet']['views']:
+            required_names = family['policy']['required'][stage].get(view['id'])
+            if required_names is None: continue  # Explicit diagnostics do not satisfy or change required gates.
             require(view['media_sha256'] in by_sha, 'Unbound identity view')
             path, artifact = by_sha[view['media_sha256']]
             features = view['features']
@@ -50,7 +58,7 @@ geometry or authenticate who annotated or accepted it. No cached score is truste
             if family['mode'] == 'production':
                 require(all(r.get('provenance') != 'fixture_truth' for r in features.values()),
                         'Synthetic annotations cannot qualify production media')
-                for name in family['policy']['required'][stage][view['id']]:
+                for name in required_names:
                     if family['policy']['features'][name]['kind'] == 'rgb':
                         require(features[name].get('provenance') == 'pixel_measured',
                                 'Production colour evidence must be measured from pixels')
@@ -61,16 +69,23 @@ geometry or authenticate who annotated or accepted it. No cached score is truste
                 for name in pixel_names:
                     require(actual[name]['value'] == features[name]['value'],
                             'Stored pixel measurement differs from media: ' + stage + '/' + view['id'] + '/' + name)
-                    measured[(artifact['sha256'], name)] = actual[name]['value']
+                    if stage == 'concept':
+                        measurement = (actual[name]['value'], regions[name])
+                        old = measured.get((artifact['sha256'], name))
+                        require(old is None or old == measurement, 'Ambiguous concept measurement regions')
+                        measured[(artifact['sha256'], name)] = measurement
         if family['mode'] == 'production':
             for dimension in ('generation', 'inspection', 'acceptance', 'licence'):
                 require(not receipt[dimension].get('evidence_ref', '').startswith('fixture:'),
                         'Synthetic attestations cannot qualify production media')
-    if 'concept' in family['heads']:
+    if 'concept' in family['heads'] and (stages is None or 'concept' in stages):
         anchor = family['receipts'][family['heads']['concept']]['payload']['identity']['anchor_features']
         for name, record in anchor.items():
+            if family['mode'] == 'production' and family['policy']['features'][name]['kind'] == 'rgb':
+                require(record['provenance'] == 'pixel_measured', 'Production colour anchor must be pixel measured')
             if record['provenance'] == 'pixel_measured':
-                require(measured.get((record['media_sha256'], name)) == record['value'],
+                measured_anchor = measured.get((record['media_sha256'], name))
+                require(measured_anchor is not None and measured_anchor[0] == record['value'],
                         'Anchor pixel measurement was not reproduced')
             elif family['mode'] == 'production':
                 require(record['provenance'] != 'fixture_truth', 'Synthetic anchor cannot qualify production media')
@@ -85,6 +100,17 @@ def _model_format(artifact, path):
         require(len(header) == 12 and header[:4] == b'glTF', 'Invalid GLB/VRM header')
         version, length = struct.unpack('<II', header[4:])
         require(version == 2 and length == artifact['bytes'], 'Invalid GLB/VRM version or length')
+        if suffix == '.vrm':
+            with path.open('rb') as handle:
+                handle.seek(12); chunk_header = handle.read(8)
+                require(len(chunk_header) == 8, 'Missing VRM extension JSON')
+                size, kind = struct.unpack('<II', chunk_header)
+                require(kind == 0x4e4f534a and 0 < size <= 2*1024*1024 and size <= length-20,
+                        'Missing or oversized VRM extension JSON')
+                document = decode_json(handle.read(size))
+            extensions = document.get('extensions', {}) if type(document) is dict else {}
+            require(type(extensions) is dict and any(type(extensions.get(k)) is dict
+                    for k in ('VRM', 'VRMC_vrm')), 'A renamed GLB is missing a VRM extension')
     else:
         with path.open('rb') as handle: header = handle.read(80)
         require(header.startswith(b'Kaydara FBX Binary') or b'FBX' in header,
@@ -133,7 +159,6 @@ def build_manifest(family, asset_root, metadata, *, release=False, intended_use=
     key, model, path = model_candidates[0]; format_name = _model_format(model, path)
     models = {format_name: {'file': key}, 'skeleton': skeleton,
               'ue': {**copy.deepcopy(metadata.get('ue', {})), 'from': format_name}}
-    if format_name == 'vrm': models['vrm']['version'] = metadata.get('ue', {}).get('vrm_version', '1.0')
     # Joined topology, retargeting and shader behavior are not inferred from a GLB header.
     toon = family['receipts'][family['heads']['toon']]['payload']['artifacts']
     material = [a for a in toon if a['role'] == 'toon-materials']
@@ -159,6 +184,24 @@ def build_manifest(family, asset_root, metadata, *, release=False, intended_use=
     for key in ('notes', 'combat'):
         if key in metadata: pack[key] = copy.deepcopy(metadata[key])
     canonical_bytes(pack)
+    try:
+        import jsonschema
+    except ImportError as exc:
+        raise PipelineError('Pack schema validation requires jsonschema in the offline Python environment') from exc
+    schema_path = Path(__file__).with_name('lumenfold.pack.schema.json')
+    schema = load_json(schema_path)
+    errors = sorted(jsonschema.Draft202012Validator(schema).iter_errors(pack), key=lambda e: str(list(e.path)))
+    require(not errors, 'Lumenfold pack schema rejected output: ' +
+            '; '.join('/'.join(map(str, e.path)) + ': ' + e.message for e in errors[:8]))
+    # The upstream validator also checks every recursively named `file` reference.
+    def check_refs(node):
+        if type(node) is dict:
+            for name, value in node.items():
+                if name == 'file' and type(value) is str: require(value in files, 'Dangling pack file reference')
+                elif name != 'files': check_refs(value)
+        elif type(node) is list:
+            for value in node: check_refs(value)
+    check_refs(pack)
     return pack
 
 

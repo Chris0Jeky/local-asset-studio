@@ -188,9 +188,14 @@ class ScorerTests(unittest.TestCase):
                 self.sheet["views"][0]["features"]["iris"]["state"] = state
                 self.assertIn("observation_unavailable:front:iris", self.score()["blockers"])
 
-    def test_non_string_diagnostic_key_does_not_crash(self):
-        self.sheet["views"][0]["features"][123] = {"value": "ignored"}
-        self.assertTrue(self.score()["passed"])
+    def test_invalid_diagnostic_keys_refuse_without_unbounded_output(self):
+        for key in (123, "x" * 10000):
+            with self.subTest(kind=type(key).__name__):
+                sheet = copy.deepcopy(self.sheet)
+                sheet["views"][0]["features"][key] = {"value": "ignored"}
+                result = score_sheet(self.anchor, sheet, self.policy, "turnaround")
+                self.assertIn("view_feature_name_invalid:front", result["blockers"])
+                self.assertLess(len(json.dumps(result)), 10000)
 
     def test_result_is_deterministic_and_json_safe(self):
         self.assertEqual(self.score(), self.score())
