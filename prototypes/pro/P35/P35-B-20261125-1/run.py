@@ -316,6 +316,22 @@ def compile_owner(args):
     return value, out
 
 
+def classify_skips(skipped, platform_name=None):
+    """Expose one unavailable Windows console fixture; all other omissions fail."""
+    platform_name = os.name if platform_name is None else platform_name
+    allowed_id = 'test_owner_run.OwnerRunTests.test_keyboard_interrupt_during_start_preserves_uncertain_intent'
+    allowed_reason = 'SIGINT delivery fixture is POSIX-only; Windows Ctrl+C remains unverified'
+    platform_omissions, required = [], []
+    for test, reason in skipped:
+        identifier = test.id()
+        row = {'test': identifier, 'reason': reason}
+        if platform_name == 'nt' and identifier == allowed_id and reason == allowed_reason:
+            platform_omissions.append(row)
+        else:
+            required.append(row)
+    return platform_omissions, required
+
+
 def verify(args):
     import source_contract_check
     out = args.out or RUNTIME / 'evidence'
@@ -360,6 +376,7 @@ def verify(args):
             else:
                 os.environ[key] = old
     source_report = outputs.get('source-contract.json')
+    platform_omissions, required_omissions = classify_skips(result.skipped if result is not None else [])
     receipt = {'schema': 'p35.software-verification/v1', 'run': RUN_ID,
                'utc': datetime.now(timezone.utc).isoformat(timespec='seconds'),
                'os': platform.platform(), 'python': sys.version, 'python_compiler': platform.python_compiler(),
@@ -368,7 +385,8 @@ def verify(args):
                'failures': len(result.failures) if result is not None else 0,
                'errors': len(result.errors) if result is not None else 0,
                'skipped': len(result.skipped) if result is not None else 0,
-               'passed': bool(result is not None and result.wasSuccessful() and not result.skipped and error is None),
+               'platform_omissions': platform_omissions, 'required_test_omissions': required_omissions,
+               'passed': bool(result is not None and result.wasSuccessful() and not required_omissions and error is None),
                'verification_error': error,
                'source_graph_comparisons': source_report.get('graph_comparisons') if isinstance(source_report, dict) else None,
                'deterministic_hashes': hashes,

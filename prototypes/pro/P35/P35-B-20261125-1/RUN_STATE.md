@@ -4,7 +4,7 @@ lane: P35
 part: B
 base: 0270760a
 phase: done
-updated: 2026-11-25T02:48Z
+updated: 2026-11-25T02:56Z
 tests: py -3 prototypes/pro/P35/P35-B-20261125-1/run.py verify --source-root .
 evidence: py -3 prototypes/pro/P35/P35-B-20261125-1/run.py verify --source-root .
 hashes: prototypes/pro/P35/P35-B-20261125-1/HASHES.sha256
@@ -17,7 +17,7 @@ hashes: prototypes/pro/P35/P35-B-20261125-1/HASHES.sha256
 - [x] 5. Publish report, adoption instructions, deterministic hashes and verified branch inventory; prepare PR for ready status. (commit 902a6dc)
 
 ## Next
-Owner: run the tests/evidence command above from the full pinned Studio branch, then follow prototypes/pro/P35/P35-B-20261125-1/README.md to create owner-inputs.json, fill the exact existing uploads/byte hashes/workspace and descriptions, inspect the prospective plan and explicitly launch Run-P35.cmd. Studio agents: implement the native collector and owner-mark join specified in ADOPTION.md, targeting at least +15 percentage points first-pass owner Keep against the frozen incumbent with hard-family/axis guardrails; preserve all unsupported/failed/uncertain cells. The 126-test Linux software check passed with four deterministic hash matches; Windows, GPU execution, artwork quality and owner calibration remain unverified. Existing full-repository Check studio CI runs separately on PR #2047 and was pending at publication. All 39 artifact files were byte-checked on the branch; Drive Lumenfold/pro/P35-B-20261125-1 contains only the byte-identical report. No merge, main push, generation or rights clearance is claimed.
+Owner: run the tests/evidence command above from the full pinned Studio branch, then follow prototypes/pro/P35/P35-B-20261125-1/README.md to create owner-inputs.json, fill the exact existing uploads/byte hashes/workspace and descriptions, inspect the prospective plan and explicitly launch Run-P35.cmd. Studio agents: implement the native collector and owner-mark join specified in ADOPTION.md, targeting at least +15 percentage points first-pass owner Keep against the frozen incumbent with hard-family/axis guardrails; preserve all unsupported/failed/uncertain cells. The 128-test Linux software check passed with four deterministic hash matches; Windows, GPU execution, artwork quality and owner calibration remain unverified. Windows verification explicitly records its POSIX-console fixture omission while all required source/integration omissions remain fatal. Existing full-repository Check studio CI runs separately on PR #2047 and was pending at publication. All 39 artifact files were byte-checked on the branch; Drive Lumenfold/pro/P35-B-20261125-1 contains only the byte-identical report. No merge, main push, generation or rights clearance is claimed.
 
 ## Not pushed yet
 - (none)

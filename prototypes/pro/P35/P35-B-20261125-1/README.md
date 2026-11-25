@@ -25,6 +25,8 @@ This runs the isolated behavioral tests, compares prepared graphs against exact 
 
 The source check deliberately requires the frozen bytes of `app/server.py`, `app/references.py` and `presets/catalog.json`, the original four graph files and model inventory used by integration tests. A newer Studio tree may refuse. Investigate and requalify a changed preparation contract; do not edit the pins merely to obtain a green result. The parent repository's `.gitattributes` already pins Python/JSON/Markdown to LF; this package additionally pins its launcher and hash manifest to LF.
 
+On Windows, the one POSIX-only console SIGINT fixture is recorded explicitly in `platform_omissions`; portable checks can pass with that named omission. Any other skipped test remains fatal. This does not establish Windows console interrupt behavior.
+
 In this remote Linux workspace the same command uses `python` and `--source-root /workspace/scratch/bb51a4d8d01a/studio-context`, a selected read-only source subset retrieved through the GitHub connector. No full repository was copied or cloned. [EVIDENCE.md](EVIDENCE.md) records the actual commands, environment, outcomes and limits. The full-repository proving commands remain `python -m unittest discover -s tests` and `python scripts/validate-repo.py`; their GitHub CI status is reported separately. This prototype does not replace those gates.
 
 ## The owner run

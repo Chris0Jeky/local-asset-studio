@@ -2,7 +2,7 @@
 
 ## Actual result
 
-The final one-command verification at **2026-11-25 02:41:56 UTC** passed **126 tests with zero failures, errors or skips**. Eight source-prepared graph variants matched the independent materializer. All **four deterministic reports** matched both their committed compact copies and `HASHES.sha256`. See `verification.json` for the exact source/test hashes and retained environment receipt.
+The final one-command verification at **2026-11-25 02:54:59 UTC** passed **128 tests with zero failures, errors or skips**. Eight source-prepared graph variants matched the independent materializer. All **four deterministic reports** matched both their committed compact copies and `HASHES.sha256`. See `verification.json` for the exact source/test hashes and retained environment receipt.
 
 This is software evidence. Every image output claim is **planned**; no owner Studio, ComfyUI model, GPU, real reference image, actual generation, artistic inspection, owner Keep or licence clearance was involved.
 
@@ -13,8 +13,8 @@ This is software evidence. Every image output claim is **planned**; no owner Stu
 | `test_owner_run.py` | 32 | Actual subprocesses and inert loopback HTTP: lost replies, timeouts, concurrent starts, stale journals, interruption/process death, graph/input/model changes, native pruning, GET-only status and separate prepare timeout |
 | `test_source_contract_check.py` | 3 | ASCII graph hash convention, exact source-file pins, four native routes × two seeds |
 | `test_integration.py` | 5 | Independent native preparation and model-inventory resolution for all four routes with two/three seeds, Unicode prompts, CLI/HTTP completion and compiler/runner readiness |
-| `test_run.py` | 20 | Public command boundary, recombined campaign/trial refusal, exact native chunk/source/model/settings coverage, deterministic evidence and failed-phase log retention |
-| **Total** | **126** | **No skipped tests** |
+| `test_run.py` | 22 | Public command boundary, recombined campaign/trial refusal, exact native chunk/source/model/settings coverage, deterministic evidence and failed-phase log retention |
+| **Total** | **128** | **No skipped tests** |
 
 Focused regressions were observed failing before fixes, including silently discarded references/facets, stale-journal concurrency, Unicode graph hashing, unrelated calibration scope, contradictions outside holdout, duplicate output bytes, route-specific missing costs, NUL prompt readiness, cross-campaign receipt recombination and lost verification logs. The shipped tests reproduce the corrected behavior; detailed transient red/green logs remain regenerable work under `.runtime` rather than an image benchmark.
 
@@ -40,6 +40,8 @@ Owner reproduction from the full pinned branch on Windows with Python 3.12+:
 ```powershell
 py -3 prototypes/pro/P35/P35-B-20261125-1/run.py verify --source-root .
 ```
+
+On Windows, the single POSIX-only console SIGINT fixture is recorded in `platform_omissions`; it does not block the portable checks. Every other skipped test, including missing native source/integration fixtures, remains a verification failure. This explicitly does not establish Windows console interrupt behavior. The two skip-policy regressions were observed failing before the fix.
 
 The program regenerates compact deterministic JSON below `.runtime`, verifies raw UTF-8/LF bytes, retains a fresh timestamped software-verification receipt and returns nonzero on test, source, hash or output-retention failure. It does not mutate expected evidence to make a mismatch pass.
 

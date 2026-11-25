@@ -241,17 +241,25 @@ class EntryPointTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'committed'):
                 entry.check_hashes(package, data)
 
-    def verification_fixture(self, phase=None, fail_test=True):
+    def verification_fixture(self, phase=None, fail_test=True, skip_id=None, simulate_windows=False,
+                             skip_reason='SIGINT delivery fixture is POSIX-only; Windows Ctrl+C remains unverified'):
         marker = 'Retain this synthetic failing test marker'
         prior_bytecode_setting = os.environ.get('PYTHONDONTWRITEBYTECODE')
         class DeliberateFailure(unittest.TestCase):
+            def id(self):
+                return skip_id or super().id()
             def runTest(self):
+                if skip_id:
+                    self.skipTest(skip_reason)
                 if fail_test:
                     self.fail(marker)
         with tempfile.TemporaryDirectory() as td, contextlib.ExitStack() as stack:
             root = Path(td)
             stack.enter_context(mock.patch.object(entry, 'ROOT', root))
             stack.enter_context(mock.patch.object(entry, 'RUNTIME', root / '.runtime' / 'verification'))
+            if simulate_windows:
+                classifier = entry.classify_skips
+                stack.enter_context(mock.patch.object(entry, 'classify_skips', side_effect=lambda rows: classifier(rows, 'nt')))
             stack.enter_context(mock.patch.object(entry.unittest.defaultTestLoader, 'discover', return_value=unittest.TestSuite([DeliberateFailure()])))
             def offline_output(_package):
                 self.assertEqual(os.environ.get('PYTHONDONTWRITEBYTECODE'), '1')
@@ -281,9 +289,33 @@ class EntryPointTests(unittest.TestCase):
                 if value.get('schema') == 'p35.software-verification/v1':
                     receipts.append(value)
             self.assertEqual(len(receipts), 1)
-            if fail_test:
+            if fail_test and not skip_id:
                 self.assertIn(marker, receipts[0]['test_log'])
             return code, receipts[0]
+
+    def test_windows_console_omission_is_explicit_and_portable_checks_can_pass(self):
+        name = 'test_owner_run.OwnerRunTests.test_keyboard_interrupt_during_start_preserves_uncertain_intent'
+        code, receipt = self.verification_fixture(fail_test=False, skip_id=name, simulate_windows=True)
+        self.assertEqual(code, 0)
+        self.assertTrue(receipt['passed'])
+        self.assertEqual(receipt['skipped'], 1)
+        self.assertEqual(receipt['platform_omissions'][0]['test'], name)
+        self.assertIn('unverified', receipt['platform_omissions'][0]['reason'])
+        self.assertEqual(receipt['required_test_omissions'], [])
+
+    def test_missing_source_checks_and_changed_skip_reasons_remain_fatal(self):
+        native = 'test_owner_run.OwnerRunTests.test_keyboard_interrupt_during_start_preserves_uncertain_intent'
+        cases = [('test_source_contract_check.SourceContractCheckTests.test_native_source_prepares_all_four_materialized_routes', True,
+                  'Full pinned source unavailable'), (native, True, 'Different unproven omission')]
+        if os.name != 'nt':
+            cases.append((native, False, 'SIGINT delivery fixture is POSIX-only; Windows Ctrl+C remains unverified'))
+        for name, windows, reason in cases:
+            with self.subTest(name=name, windows=windows, reason=reason):
+                code, receipt = self.verification_fixture(fail_test=False, skip_id=name,
+                    simulate_windows=windows, skip_reason=reason)
+                self.assertEqual(code, 1)
+                self.assertFalse(receipt['passed'])
+                self.assertEqual(len(receipt['required_test_omissions']), 1)
 
     def test_verify_retains_failed_test_log_when_a_later_phase_fails(self):
         for phase in ('evidence', 'source', 'hashes', 'output'):
