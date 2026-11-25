@@ -3,8 +3,8 @@ run: P36-B-20261125-1
 lane: P36
 part: B
 base: 0270760a
-phase: planning
-updated: 2026-11-25T01:34Z
+phase: building
+updated: 2026-11-25T01:42Z
 
 ## Items
 - [ ] 1. Inspect Studio asset-family and Lumenfold pack contracts; define identity kill gates.
@@ -14,7 +14,7 @@ updated: 2026-11-25T01:34Z
 - [ ] 5. Verify branch payload, publish final evidence and mark PR ready.
 
 ## Next
-Read studio_workflow/asset_family.py, docs/asset-family/README.md, character-consistency contracts and the attached Lumenfold pipelines/characters/ and pack.json validators. Write the scoped design and test plan under this run directory; implement only within the assigned prototype and report directories. No generations are authorized for this sandbox.
+Implement the design in DESIGN.md with tests first. Root owns pipeline.py and pack_export.py; identity agent prepares consistency.py in scratch for root integration. Keep actual media and fixture runs under .runtime. Stage failed identity evidence must block all dependent stages. Next checkpoint includes passing receipt/score tests.
 
 ## Not pushed yet
 - (none)
