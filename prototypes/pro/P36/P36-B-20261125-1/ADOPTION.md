@@ -22,7 +22,7 @@ No live Studio scheduler, Workspace acceptance store, app endpoint or catalogue 
 | --- | --- | --- |
 | Studio agents | 0 exact A2 source/acceptance mappings recorded by this run | 1 verified mapping to exact bytes and current acceptance scope |
 | Studio agents | 0/16 synthetic invalid cases admitted; real rate unmeasured | Preserve 0/16; target 0 critical false passes on an explicitly counted, held-out real set |
-| Studio agents | 0 live adapter negative tests implemented by this prototype | All five listed authority/media/uncertainty classes reject before queue/export |
+| Studio agents | 0 live adapter negative tests implemented by this prototype | 7/7 listed authority/media/uncertainty cases reject before queue/export |
 | lf-characters-3d | 0/8 real P36 stages with complete receipts | 8/8 when each preceding gate actually passes; no promotion for a failed stage |
 | lf-characters-3d | 0 native imports measured here | 1 staged import with zero contract errors and passing interruption/rollback checks |
 | lf-anime-look | 0 real P36 playback captures | 1 accepted representative sequence, at least 24 consecutive frames when motion is claimed |
@@ -64,7 +64,7 @@ This is **planned implementation**, not an enabled feature. Integrate the protot
 - Read current selected parents, acceptance/revocation events and review subjects from the authoritative store. Recheck immediately before submission and publication. A rejected, replaced, missing or stale required ancestor blocks every descendant, including cached outputs.
 - Bind stage receipts to real Workspace asset/job IDs, exact media, full recipes and retained prompt IDs. Consult live uncertain-job history even when no output artifact exists yet. Recover the recorded attempt; do not resubmit it to obtain a cleaner receipt.
 - Require fresh byte and pixel verification for production admission. Keep metadata-only assessment diagnostic. Preserve separate generation, inspection, acceptance and licence-use states.
-- Make revocation, changed media, forged review subjects, wrong Workspace scope, missing views and one failed critical trait executable negative tests through the live adapter. Required tests must reject before a job is queued or a handoff is published.
+- Make revocation, changed media, forged review subjects, wrong Workspace scope, missing views, one failed critical trait and unresolved upstream submissions executable negative tests through the live adapter. Required tests must reject before a job is queued or a handoff is published.
 
 The implemented preflight can inspect a prepared, authoritative family without submitting work:
 
