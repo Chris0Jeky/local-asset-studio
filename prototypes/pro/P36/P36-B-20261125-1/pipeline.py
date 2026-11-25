@@ -15,6 +15,10 @@ from pathlib import Path, PurePosixPath, PureWindowsPath
 import re
 import sys
 
+# CLI runs keep regenerable bytecode out of the source tree.
+if __name__ == '__main__':
+    sys.dont_write_bytecode = True
+
 SCHEMA = 'las.character-family/1'
 STAGES = ('concept', 'turnaround', 'expressions', 'outfits', 'mesh', 'rig', 'toon', 'unreal')
 PARENTS = {

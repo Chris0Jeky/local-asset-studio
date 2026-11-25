@@ -8,6 +8,10 @@ from pathlib import Path
 import struct
 import sys
 
+# CLI runs keep regenerable bytecode out of the source tree.
+if __name__ == '__main__':
+    sys.dont_write_bytecode = True
+
 from pipeline import (PipelineError, STAGES, REPO_ROOT, assess, canonical_bytes, decode_json,
                       digest, linked, load_json, require, validate_family,
                       verify_artifact, write_new_runtime)

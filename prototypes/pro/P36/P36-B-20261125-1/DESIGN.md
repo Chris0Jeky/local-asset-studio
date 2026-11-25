@@ -19,8 +19,9 @@ independent evidence states and a reproducible consistency report. Re-evaluation
 walks current ancestry rather than trusting a cached green badge.
 
 **Tech stack:** Python 3.12+, standard library; Pillow only for explicit raster
-measurements (already a Studio dependency). Lumenfold's existing jsonschema validator
-is an optional integration check; no third-party implementation is vendored.
+measurements (already a Studio dependency). jsonschema validates every export
+against the supplied Lumenfold schema; running Lumenfold's actual consumer validator
+is an optional additional integration check. No third-party implementation is vendored.
 
 **Spec:** the owner's P36-B-20261125-1 brief; this document fixes implementation
 choices under the authority to take the lead. No additional approval is needed for

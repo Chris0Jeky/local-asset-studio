@@ -15,6 +15,10 @@ from pathlib import Path
 import platform
 import statistics
 import sys
+
+# CLI runs keep regenerable bytecode out of the source tree.
+if __name__ == '__main__':
+    sys.dont_write_bytecode = True
 import time
 import unittest
 
