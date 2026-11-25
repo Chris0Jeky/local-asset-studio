@@ -1,0 +1,480 @@
+{
+  "task_id": "P35-B-20261125-1",
+  "accessed_on": "2026-11-25",
+  "repository_pin": "0270760a",
+  "evidence_policy": "Primary publisher/code sources except S41, explicitly an unresolved question. Web branches are not immutable deployment pins. No model downloads or executions. Parent must reopen any source it cites through its own web session.",
+  "sources": [
+    {
+      "id": "S01",
+      "url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-4B/blob/main/README.md",
+      "citation_ref": "turn593587386search2",
+      "version_or_date": "FLUX.2 Klein 4B, main retrieved 2026-11-25",
+      "supports_and_limits": "Official model card: 4B rectified-flow model and multi-reference editing; publisher memory estimate, not AMD measurement.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S02",
+      "url": "https://github.com/black-forest-labs/flux2",
+      "citation_ref": "turn178079836view3",
+      "version_or_date": "FLUX.2 repository, main retrieved 2026-11-25",
+      "supports_and_limits": "January 15 Klein release; distilled/base distinction; code and autoencoder Apache-2.0; NVIDIA reference environment. Installed VAE hash remains unresolved.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S03",
+      "url": "https://help.bfl.ai/articles/7592221790-how-do-i-generate-quickly-with-flux-2-klein",
+      "citation_ref": "turn593587386search4",
+      "version_or_date": "BFL help, retrieved 2026-11-25",
+      "supports_and_limits": "Up to four references; model-family memory estimates and prompt guidance. Not an RX 9070 XT benchmark.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S04",
+      "url": "https://blog.comfy.org/p/flux2-klein-4b-fast-local-image-editing",
+      "citation_ref": "turn743765117search0",
+      "version_or_date": "Comfy release post, January 15 2026",
+      "supports_and_limits": "Reported RTX 5090 VRAM: distilled 4B 8.4 GB and 9B 19.6 GB; implementation-specific, not AMD fit assurance.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S05",
+      "url": "https://github.com/Comfy-Org/ComfyUI/blob/master/comfy_extras/nodes_edit_model.py",
+      "citation_ref": "turn153077051view3",
+      "version_or_date": "ComfyUI master retrieved 2026-11-25, immutable commit not resolved",
+      "supports_and_limits": "ReferenceLatent and ReferenceMultiLatent schemas and reference ordering; generic slot maximum does not establish model-supported count.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S06",
+      "url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-9B",
+      "citation_ref": "turn792943008view3",
+      "version_or_date": "FLUX.2 Klein 9B, main retrieved 2026-11-25",
+      "supports_and_limits": "9B rectified-flow model, Qwen3 8B encoder, distilled four steps; FLUX NCL.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S07",
+      "url": "https://huggingface.co/unsloth/FLUX.2-klein-9B-GGUF",
+      "citation_ref": "turn508140512view1",
+      "version_or_date": "Unsloth conversion card, main retrieved 2026-11-25",
+      "supports_and_limits": "GGUF conversion provenance and quantization method; upstream non-commercial model terms remain.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S08",
+      "url": "https://github.com/city96/ComfyUI-GGUF",
+      "citation_ref": "turn951459284view3",
+      "version_or_date": "ComfyUI-GGUF current repository",
+      "supports_and_limits": "Apache-2.0 code; custom node loader and experimental LoRA support. Must pin installed commit and patches.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S09",
+      "url": "https://github.com/DepthAnything/Depth-Anything-V2",
+      "citation_ref": "turn995908356search3",
+      "version_or_date": "Depth Anything V2, release June 14 2024",
+      "supports_and_limits": "Small weights Apache-2.0; Base/Large/Giant CC-BY-NC-4.0. Local depth route selects Large.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S10",
+      "url": "https://github.com/QwenLM/Qwen-Image",
+      "citation_ref": "turn178079836view1",
+      "version_or_date": "Qwen Image repository, 2511 released December 23 2025",
+      "supports_and_limits": "20B MMDiT image family and release chronology.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S11",
+      "url": "https://huggingface.co/Qwen/Qwen-Image-Edit-2511",
+      "citation_ref": "turn951459284view4",
+      "version_or_date": "Qwen Image Edit 2511 official model card",
+      "supports_and_limits": "Apache-2.0; character/multi-person publisher claims; official example 40 steps and true CFG 4. No anime-specific qualification.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S12",
+      "url": "https://huggingface.co/Qwen/Qwen-Image-Edit-2509",
+      "citation_ref": "turn235509750view0",
+      "version_or_date": "Qwen Image Edit 2509 official model card",
+      "supports_and_limits": "Multi-image editing, preferred 1–3 pictures, and native depth/edge/keypoint visual guidance.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S13",
+      "url": "https://huggingface.co/lightx2v/Qwen-Image-Edit-2511-Lightning",
+      "citation_ref": "turn235509750view1",
+      "version_or_date": "LightX2V Lightning 2511, four-step V1.0",
+      "supports_and_limits": "Apache-2.0 card; exact BF16 LoRA is distinct from FP32 and fused FP8 variants.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S14",
+      "url": "https://github.com/Comfy-Org/ComfyUI/blob/master/comfy_extras/nodes_qwen.py",
+      "citation_ref": "turn153077051view2",
+      "version_or_date": "ComfyUI master retrieved 2026-11-25, immutable commit not resolved",
+      "supports_and_limits": "Native Qwen2511 and Qwen2.1 encode/cache contracts. Source reading only; installed backend object_info not queried.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S15",
+      "url": "https://huggingface.co/Qwen/Qwen-Image-2.1",
+      "citation_ref": "turn178079836view0",
+      "version_or_date": "Qwen Image 2.1, released September 20 2026",
+      "supports_and_limits": "7B, 32 single-stream blocks, prefix KV reuse, ten references, RGBA; Qwen Research License.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S16",
+      "url": "https://github.com/QwenLM/Qwen-Image-2.1",
+      "citation_ref": "turn455888134view3",
+      "version_or_date": "Official Qwen2.1 repository, release September 20 2026; Turbo October 9",
+      "supports_and_limits": "Separate repository terms and release chronology; accelerated checkpoint is a new condition.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S17",
+      "url": "https://huggingface.co/Qwen/Qwen-Image-2.1-Turbo",
+      "citation_ref": "turn153077051view0",
+      "version_or_date": "Qwen Image 2.1 Turbo, retrieved 2026-11-25",
+      "supports_and_limits": "Eight-step accelerated checkpoint with included sampling schedule and CFG 1; research licence.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S18",
+      "url": "https://docs.comfy.org/tutorials/image/qwen/qwen-image-2-1",
+      "citation_ref": "turn993049844view2",
+      "version_or_date": "Comfy official tutorial, retrieved 2026-11-25",
+      "supports_and_limits": "Qwen2.1 native workflow and reference slots; ten model references versus sixteen generic node slots.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S19",
+      "url": "https://github.com/Comfy-Org/workflow_templates/blob/main/templates/image_qwen_image_2_1_image_edit.json",
+      "citation_ref": "turn373266271search1",
+      "version_or_date": "Official Qwen2.1 edit template, main retrieved 2026-11-25",
+      "supports_and_limits": "Concrete component filenames/quantizations and template. Storage sizes are not peak residency.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S20",
+      "url": "https://huggingface.co/black-forest-labs/flux-3-image-klein",
+      "citation_ref": "turn805606972view0",
+      "version_or_date": "FLUX 3 Image Klein, October 15 2026 release",
+      "supports_and_limits": "5.6B, Qwen3-VL4B, ten references, full-scene-caption input, normalized boxes with soft boundaries.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S21",
+      "url": "https://huggingface.co/black-forest-labs/flux-3-image-klein-comfy",
+      "citation_ref": "turn805606972view1",
+      "version_or_date": "Official Comfy distribution, retrieved 2026-11-25",
+      "supports_and_limits": "INT8 component packaging; encoder/prompt-upscaler terms; NVIDIA consumer path; weight size is not working memory.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S22",
+      "url": "https://github.com/black-forest-labs/flux-3-image-klein",
+      "citation_ref": "turn231577476view4",
+      "version_or_date": "Official inference repository, retrieved 2026-11-25",
+      "supports_and_limits": "Apache code versus Kommunity weights; B200 peak BF16/FP8/NVFP4 31/26/25 GB without prompt upsampler; reference code lacks INT8 path.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S23",
+      "url": "https://github.com/Comfy-Org/workflow_templates/blob/main/templates/image_flux3_klein_distilled_image_edit.json",
+      "citation_ref": "turn153077051view1",
+      "version_or_date": "Official distilled edit template, main retrieved 2026-11-25",
+      "supports_and_limits": "Native graph actual sampler 16/euler/simple/CFG1; stale Markdown note says 50/3.5. Flat API inputs resolution and resolution.megapixels, images.image0 onward.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S24",
+      "url": "https://bfl.ai/blog/flux-3-image-klein",
+      "citation_ref": "turn805606972view2",
+      "version_or_date": "Official October 15 2026 release post",
+      "supports_and_limits": "Release and NVIDIA performance context; API pixel restoration must not be attributed to a local graph.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S25",
+      "url": "https://github.com/huggingface/diffusers/blob/main/docs/source/en/api/pipelines/flux3.md",
+      "citation_ref": "turn662639041search8",
+      "version_or_date": "Diffusers main Flux3 pipeline documentation",
+      "supports_and_limits": "Independent primary implementation contract: Flux3 transformer, Qwen3VL, AutoencoderKLFlux2, modular pipeline. Not an AMD benchmark.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S26",
+      "url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-9b-kv/blob/main/README.md",
+      "citation_ref": "turn373266271search6",
+      "version_or_date": "Official Klein 9B KV card",
+      "supports_and_limits": "KV variant and approximately 29 GB full-precision NVIDIA footprint; no demonstrated anime advantage.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S27",
+      "url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-4B/blob/main/LICENSE.md",
+      "citation_ref": "turn951459284view2",
+      "version_or_date": "Klein4B Apache-2.0 licence; viewed file short commit 6dfcebf",
+      "supports_and_limits": "Official upstream weight licence; local FP8 conversion identity separately documented in supplied inventory.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S28",
+      "url": "https://huggingface.co/Qwen/Qwen3-4B",
+      "citation_ref": "turn231577476view0",
+      "version_or_date": "Qwen3 4B upstream card",
+      "supports_and_limits": "Apache-2.0 encoder upstream; Comfy repack lineage remains a separate item.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S29",
+      "url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-9B/blob/main/LICENSE.md",
+      "citation_ref": "turn743765117view0",
+      "version_or_date": "FLUX Non-Commercial License v2.1; viewed short commit 07c5ac6",
+      "supports_and_limits": "Model-use restriction and separate output clause. Outputs not automatically derivative models; output permissions have conditions. No owner clearance inferred.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S30",
+      "url": "https://huggingface.co/Qwen/Qwen3-8B",
+      "citation_ref": "turn231577476view1",
+      "version_or_date": "Qwen3 8B upstream card",
+      "supports_and_limits": "Apache-2.0 upstream; does not independently prove mixed-FP8 repack bytes.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S31",
+      "url": "https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct",
+      "citation_ref": "turn951459284view0",
+      "version_or_date": "Qwen2.5-VL7B upstream card",
+      "supports_and_limits": "Apache-2.0. Local Comfy encoder and VAE terms/hashes are inherited inventory evidence.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S32",
+      "url": "https://github.com/Comfy-Org/ComfyUI",
+      "citation_ref": "turn495000932view3",
+      "version_or_date": "ComfyUI repository, retrieved 2026-11-25",
+      "supports_and_limits": "GPL-3.0 runtime code; does not determine weight licences.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S33",
+      "url": "https://huggingface.co/Qwen/Qwen-Image-2.1/blob/main/LICENSE",
+      "citation_ref": "turn455888134view2",
+      "version_or_date": "Qwen Research License, September 20 2026; viewed short commit f52e6a5",
+      "supports_and_limits": "Research/evaluation non-commercial scope and separate commercial licensing mechanism.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S34",
+      "url": "https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct",
+      "citation_ref": "turn231577476view2",
+      "version_or_date": "Qwen3-VL8B upstream card",
+      "supports_and_limits": "Apache-2.0 encoder; not blanket permission for Qwen2.1 image model.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S35",
+      "url": "https://huggingface.co/black-forest-labs/flux-3-image-klein/blob/main/LICENSE.md",
+      "citation_ref": "turn731235108view0",
+      "version_or_date": "FLUX Kommunity License v1.0",
+      "supports_and_limits": "Qualifying-user definition includes annualized gross revenue under USD5M including affiliates; commercial-output exception and restrictions need owner review.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S36",
+      "url": "https://huggingface.co/h94/IP-Adapter",
+      "citation_ref": "turn659899144view1",
+      "version_or_date": "Tencent/h94 IPAdapter weight card",
+      "supports_and_limits": "Apache-2.0 declaration; global versus patch embeddings and distinct face variants.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S37",
+      "url": "https://github.com/tencent-ailab/IP-Adapter",
+      "citation_ref": "turn659899144view0",
+      "version_or_date": "Official Tencent IPAdapter repository",
+      "supports_and_limits": "Apache-2.0 code; center-crop limitations and ControlNet combinations.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S38",
+      "url": "https://huggingface.co/xinsir/controlnet-openpose-sdxl-1.0",
+      "citation_ref": "turn659899144view2",
+      "version_or_date": "Xinsir SDXL OpenPose model card",
+      "supports_and_limits": "Apache-2.0 declaration; training skeleton line convention affects control strength.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S39",
+      "url": "https://github.com/cubiq/ComfyUI_IPAdapter_plus",
+      "citation_ref": "turn659899144view3",
+      "version_or_date": "ComfyUI IPAdapter Plus repository; related NODES.md read",
+      "supports_and_limits": "GPL-3.0 code; weighting, embedding averaging, start/end and style-transfer settings. Averaged style is not actor binding.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S40",
+      "url": "https://huggingface.co/laion/CLIP-ViT-H-14-laion2B-s32B-b79K",
+      "citation_ref": "turn995908356search2",
+      "version_or_date": "LAION CLIP ViT-H upstream card",
+      "supports_and_limits": "MIT declaration; bundled vision-tower conversion provenance still separate.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S41",
+      "url": "https://github.com/tencent-ailab/IP-Adapter/issues/478",
+      "citation_ref": "turn995908356search1",
+      "version_or_date": "Public upstream issue, retrieved 2026-11-25",
+      "supports_and_limits": "Unanswered provenance question only. This issue is NOT authoritative confirmation of licence or lineage.",
+      "evidence": "unresolved_public_question"
+    },
+    {
+      "id": "S42",
+      "url": "https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/compatibility/compatibilityrad/windows/windows_compatibility.html",
+      "citation_ref": "turn792943008view4",
+      "version_or_date": "Version-specific ROCm7.2.1 Windows matrix; current page links newer Core SDK docs",
+      "supports_and_limits": "RX9070XT/Windows11/PyTorch2.9/Python3.12 and RDNA4 FP8; complete ROCm stack not supported. Not latest-version claim.",
+      "evidence": "primary_source_read"
+    },
+    {
+      "id": "S43",
+      "url": "https://www.amd.com/en/resources/support-articles/release-notes/RN-AMDGPU-WINDOWS-PYTORCH-7-2-1.html",
+      "citation_ref": "turn743765117search4",
+      "version_or_date": "AMD Windows PyTorch7.2.1 release notes, March26 2026",
+      "supports_and_limits": "Memory/pinned-memory suggestions are optional test variables, not authority to modify the installed environment.",
+      "evidence": "primary_source_read"
+    }
+  ],
+  "local_sources": [
+    {
+      "path": "CLAUDE.md",
+      "supplied_context_sha256": "0fbe12b10b41c6ff2a1c5897b3864da737ce57031e42b55c8aed19f0d40524dd",
+      "repository_pin": "0270760a",
+      "evidence": "supplied_repository_documentation_or_graph_not_live_machine_observation"
+    },
+    {
+      "path": "CURRENT_STATE.md",
+      "supplied_context_sha256": "ce86fc4d1264eac66dbe5ff1f64a9206689c8719ffbced346f1f9523fa220008",
+      "repository_pin": "0270760a",
+      "evidence": "supplied_repository_documentation_or_graph_not_live_machine_observation"
+    },
+    {
+      "path": "docs/PRODUCT_DIRECTION.md",
+      "supplied_context_sha256": "d5894fe828add3873544988ea03fd174f4b752466ff6e6aac03543a12ff2471a",
+      "repository_pin": "0270760a",
+      "evidence": "supplied_repository_documentation_or_graph_not_live_machine_observation"
+    },
+    {
+      "path": "docs/STATUS.md",
+      "supplied_context_sha256": "d36cc5c8e0d219e1704a4aacea14b42199fb05d23ec0072641c8473c7827b95e",
+      "repository_pin": "0270760a",
+      "evidence": "supplied_repository_documentation_or_graph_not_live_machine_observation"
+    },
+    {
+      "path": "docs/OPERATIONS.md",
+      "supplied_context_sha256": "21932defe805ac5b849691b7de29cc52d958d4823abbedc5da4ea9b2ea37e8ac",
+      "repository_pin": "0270760a",
+      "evidence": "supplied_repository_documentation_or_graph_not_live_machine_observation"
+    },
+    {
+      "path": "presets/catalog.json",
+      "supplied_context_sha256": "8a246463e974720a70140d71ceabf8ca66dd962467d302011a2e1eed029ec214",
+      "repository_pin": "0270760a",
+      "evidence": "supplied_repository_documentation_or_graph_not_live_machine_observation"
+    },
+    {
+      "path": "models/library.json",
+      "supplied_context_sha256": "819bab253a4003eb2f9dfa87aaa153b35e25d86686edb66b7a7f148a1cadfcf4",
+      "repository_pin": "0270760a",
+      "evidence": "supplied_repository_documentation_or_graph_not_live_machine_observation"
+    },
+    {
+      "path": "workflows/api/combine-klein-api.json",
+      "supplied_context_sha256": "66ce06910ca7552def1635582cbbdf03bc171fa50d8d0a89a60a647771ea5578",
+      "repository_pin": "0270760a",
+      "evidence": "supplied_repository_documentation_or_graph_not_live_machine_observation"
+    },
+    {
+      "path": "workflows/api/combine-klein-9b-skeleton-api.json",
+      "supplied_context_sha256": "9f28f9f2b6e824c222e889538261da55c820e6b7b4603097fc72d37eee607935",
+      "repository_pin": "0270760a",
+      "evidence": "supplied_repository_documentation_or_graph_not_live_machine_observation"
+    },
+    {
+      "path": "workflows/api/combine-klein-9b-copypose-api.json",
+      "supplied_context_sha256": "b31203a55df458649c2abc92314e60704d63a770e5577a5ee6aa7ca295d46956",
+      "repository_pin": "0270760a",
+      "evidence": "supplied_repository_documentation_or_graph_not_live_machine_observation"
+    },
+    {
+      "path": "workflows/api/qwen-3ref-api.json",
+      "supplied_context_sha256": "21cb720d19813dd9771870bab81fda7f0677438a3a74c4e9922fe612e7d5a4c4",
+      "repository_pin": "0270760a",
+      "evidence": "supplied_repository_documentation_or_graph_not_live_machine_observation"
+    },
+    {
+      "path": "workflows/api/qwen21-edit-api.json",
+      "supplied_context_sha256": "04aa98c98dba9406594002c2ab99c5e7ba36556423976b069fa7a7054705b496",
+      "repository_pin": "0270760a",
+      "evidence": "supplied_repository_documentation_or_graph_not_live_machine_observation"
+    }
+  ],
+  "historical_observations": [
+    {
+      "source": "presets/catalog.json",
+      "preset": "combine-klein",
+      "date": "2026-09-14",
+      "claim": "37.6 seconds warm at 1024x1536, six steps",
+      "not_replicated": true
+    },
+    {
+      "source": "presets/catalog.json",
+      "preset": "combine-klein-9b-copypose",
+      "date": "2026-09-16",
+      "job_id": "61dd5375-aa6c-42ca-b1e0-12466689857e",
+      "claim": "58.5 seconds warm; preceding three successful seeds used one pair",
+      "not_replicated": true
+    },
+    {
+      "source": "presets/catalog.json",
+      "preset": "combine-klein-9b-skeleton",
+      "date": "2026-09-15",
+      "claim": "75 seconds warm research estimate; three seeds on one guide; Studio execution68.7 seconds; later page-rendered guide66.5 seconds",
+      "not_replicated": true
+    },
+    {
+      "source": "CURRENT_STATE.md",
+      "date": "2026-09-12",
+      "claim": "Qwen2511Q4 resident12,738.98 MB; two-reference allocation failure at87% commit after29GB initial headroom; historical admission floor raised to32GiB commit headroom",
+      "not_replicated": true,
+      "limit": "Route-specific historical gate; current22GiB cache-release safeguard is a different purpose."
+    },
+    {
+      "source": "presets/catalog.json",
+      "preset": "qwen-3ref",
+      "date": "2026-09-12",
+      "claim": "Older512x768 run1334.646 seconds; corrected current graph verified:false",
+      "not_replicated": true
+    },
+    {
+      "source": "presets/catalog.json",
+      "preset": "qwen21-edit",
+      "date": "2026-09-27",
+      "job_id": "74597f0d-3e0b-4fb1-bab5-a2c79a8b6b22",
+      "claim": "One-reference edit114.7 seconds, commit52.0% to75.9%; agent-inspected only",
+      "not_replicated": true
+    },
+    {
+      "source": "presets/catalog.json",
+      "preset": "wai-skeleton",
+      "date": "2026-09-23",
+      "job_id": "6a342bbf-995f-466e-9e51-2bf169b11460",
+      "claim": "832x1216,36.4 seconds, drawn studio.coco18-openpose-xinsir/v1 guide; agent-inspected only",
+      "not_replicated": true
+    }
+  ]
+}
