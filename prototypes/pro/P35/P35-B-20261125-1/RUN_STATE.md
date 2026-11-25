@@ -4,7 +4,7 @@ lane: P35
 part: B
 base: 0270760a
 phase: building
-updated: 2026-11-25T02:04Z
+updated: 2026-11-25T02:24Z
 
 ## Items
 - [x] 1. Read pinned Studio contracts and existing reference routes; define kill criteria and qualification design. (commit 4c78d25)
@@ -14,7 +14,7 @@ updated: 2026-11-25T02:04Z
 - [ ] 5. Publish report, adoption instructions, deterministic hashes and verified branch inventory; mark PR ready.
 
 ## Next
-Implement qualification.py, test_qualification.py and suite.json from the contracts in DESIGN.md and PLAN.md; delegated drafts are in agent-design. Build source-pinned routes.json, graphs and plan.py from the original catalog/graph bindings. owner_run.py is being independently drafted against the existing Production APIs; it must validate prepared input hashes and never repeat uncertain mutations. Read the saved branch first if this workspace is lost. No app or catalog change, no generation, no owner calibration is claimed.
+Qualification source, suite, contract and 37 adversarial tests are now checkpointed. Finish the role-facet review in plan.py, then push the source-pinned routes.json, four original graphs and planner tests. Integrate owner_run.py, its 29 tests and the source_contract_check.py harness. Add run.py, README.md, ADOPTION.md and deterministic evidence/hashes. No app or catalog change, GPU generation, owner calibration or licence clearance is claimed. Read this branch before recovering a lost workspace.
 
 ## Not pushed yet
 - (none)
