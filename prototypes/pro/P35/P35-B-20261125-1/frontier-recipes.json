@@ -1,0 +1,619 @@
+{
+  "task_id": "P35-B-20261125-1",
+  "created_on": "2026-11-25",
+  "repository_pin": "0270760a",
+  "state": "planned",
+  "verified": false,
+  "runtime_admitted": false,
+  "replaces_existing_presets": false,
+  "added_to_current_run_plan": false,
+  "evidence": "Native source and official template inspection only; no installed-backend schema query, model load, run, image review, or licence clearance.",
+  "placeholder_policy": "Strings beginning __OWNER_ or __REQUIRED_ are deliberately unresolved and MUST block submission. They are not claims that model or input filenames exist.",
+  "recipes": [
+    {
+      "id": "frontier-flux3-distilled-multiref",
+      "state": "planned",
+      "verified": false,
+      "runtime_admitted": false,
+      "available_in_pinned_primary_portfolio": false,
+      "graph_is_authored_proposal": true,
+      "graph": {
+        "1": {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "__OWNER_INSTALLED_ALIAS_FLUX3_DISTILLED_INT8_CONVROT__",
+            "weight_dtype": "default"
+          }
+        },
+        "2": {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "__OWNER_INSTALLED_ALIAS_QWEN3VL4B_INT8_CONVROT__",
+            "type": "flux3",
+            "device": "default"
+          }
+        },
+        "3": {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "__OWNER_INSTALLED_ALIAS_FLUX2_VAE_VERIFIED_BYTES__"
+          }
+        },
+        "4": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "2",
+              0
+            ],
+            "text": "__REQUIRED_FULL_SCENE_CAPTION_WITH_REF_IMAGE_0_1_2_ROLE_MAPPING__"
+          }
+        },
+        "6": {
+          "class_type": "ConditioningZeroOut",
+          "inputs": {
+            "conditioning": [
+              "4",
+              0
+            ]
+          }
+        },
+        "7": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "positive": [
+              "17",
+              0
+            ],
+            "negative": [
+              "17",
+              1
+            ],
+            "latent_image": [
+              "17",
+              2
+            ],
+            "seed": 2026112501,
+            "steps": 16,
+            "cfg": 1.0,
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "denoise": 1.0
+          }
+        },
+        "8": {
+          "class_type": "VAEDecode",
+          "inputs": {
+            "samples": [
+              "7",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ]
+          }
+        },
+        "9": {
+          "class_type": "SaveImage",
+          "inputs": {
+            "images": [
+              "8",
+              0
+            ],
+            "filename_prefix": "Planned/P35-B-20261125-1/flux3-multiref"
+          }
+        },
+        "11": {
+          "class_type": "LoadImage",
+          "inputs": {
+            "image": "__OWNER_INPUT_ALIAS_CHARACTER_IDENTITY__"
+          }
+        },
+        "12": {
+          "class_type": "LoadImage",
+          "inputs": {
+            "image": "__OWNER_INPUT_ALIAS_POSE_GUIDE__"
+          }
+        },
+        "13": {
+          "class_type": "LoadImage",
+          "inputs": {
+            "image": "__OWNER_INPUT_ALIAS_STYLE_REFERENCE__"
+          }
+        },
+        "17": {
+          "class_type": "ReferenceMultiLatent",
+          "inputs": {
+            "positive": [
+              "4",
+              0
+            ],
+            "negative": [
+              "6",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ],
+            "resolution": "resize",
+            "resolution.megapixels": 1.0,
+            "images.image0": [
+              "11",
+              0
+            ],
+            "images.image1": [
+              "12",
+              0
+            ],
+            "images.image2": [
+              "13",
+              0
+            ]
+          }
+        }
+      },
+      "graph_sha256_canonical": "43a803ce67024f239f375a3dac9c937640145913e8e7fb11e3b827ab184b207e",
+      "sidecar_preset": {
+        "id": "frontier-flux3-distilled-multiref",
+        "name": "Planned FLUX 3 Klein distilled multi-reference edit",
+        "state": "planned",
+        "verified": false,
+        "runtime_admitted": false,
+        "submit_enabled": false,
+        "backend_id": "__OWNER_QUALIFIED_FLUX3_BACKEND__",
+        "graph_key": "frontier-flux3-distilled-multiref",
+        "positive": [
+          "4",
+          "text"
+        ],
+        "seed": [
+          "7",
+          "seed"
+        ],
+        "steps": [
+          "7",
+          "steps"
+        ],
+        "cfg": [
+          "7",
+          "cfg"
+        ],
+        "reference_slots": [
+          {
+            "role": "identity",
+            "binding": [
+              "11",
+              "image"
+            ],
+            "conditioning_binding": [
+              "17",
+              "images.image0"
+            ],
+            "prompt_label": "<ref_image_0>",
+            "contribution": "Character design, costume and identity",
+            "avoid": "Source pose or background"
+          },
+          {
+            "role": "pose",
+            "binding": [
+              "12",
+              "image"
+            ],
+            "conditioning_binding": [
+              "17",
+              "images.image1"
+            ],
+            "prompt_label": "<ref_image_1>",
+            "contribution": "Pose, camera and contact geometry",
+            "avoid": "Pose actor identity, clothes or drawing marks"
+          },
+          {
+            "role": "style",
+            "binding": [
+              "13",
+              "image"
+            ],
+            "conditioning_binding": [
+              "17",
+              "images.image2"
+            ],
+            "prompt_label": "<ref_image_2>",
+            "contribution": "Specified rendering traits only",
+            "avoid": "Style-image character identity, costume or composition"
+          }
+        ],
+        "reference_board": {
+          "min": 3,
+          "max": 3,
+          "policy": "Exactly three role-bound references for the first proposed condition; extra actors or references require a new manifest and separate qualification."
+        },
+        "reference_resolution": [
+          "17",
+          "resolution.megapixels"
+        ]
+      },
+      "source_ids": [
+        "S05",
+        "S20",
+        "S21",
+        "S22",
+        "S23",
+        "S24",
+        "S25",
+        "S35"
+      ],
+      "source_version": "Upstream source read 2026-11-25; immutable upstream commit and installed object_info comparison pending.",
+      "terms": {
+        "model": "FLUX Kommunity v1.0; owner eligibility/conditions unresolved",
+        "inference_code": "Apache-2.0 upstream; ComfyUI GPL-3.0",
+        "encoder": "Apache-2.0 upstream; exact Comfy repack must be pinned",
+        "vae": "Official FLUX2 autoencoder Apache-2.0; installed-copy byte match unresolved",
+        "prompt_upsampler": "Not loaded by this graph. Owner-supplied full scene caption uses publisher-supported direct-caption route."
+      },
+      "notes": [
+        "This is an authored API reduction of the official template, with three source-verified reference slots. It is not the unchanged upstream template.",
+        "16 steps/CFG1 match actual distilled sampler widgets; do not follow the stale50/3.5 Markdown note.",
+        "ReferenceMultiLatent emits output latent at first-reference dimensions after1MP resize; there are no independent width/height controls in this recipe.",
+        "Official model limit ten references; native generic node100 slots is not a model promise.",
+        "FLUX3 uses <ref_image_0> labels and soft box layout; any box tokens must be authored from official prompt grammar and recorded. No hard-mask or pixel-preservation claim.",
+        "Full scene caption is required; skipping the9B prompt upsampler is an explicit experimental condition using the supported direct-caption interface.",
+        "NVIDIA INT8 fit/performance claims do not establish Windows AMD int8 kernel availability or peak memory."
+      ],
+      "unresolved_before_runtime_admission": [
+        "Map every __OWNER_ placeholder to a verified owner-installed alias or required prompt; record file bytes, immutable source revision and terms.",
+        "Confirm all node types, input names including dotted dynamic fields, output indices and enum choices against the selected installed backend object_info.",
+        "Confirm backend/runtime/driver/custom-op versions and GPU ownership; satisfy existing admission gate without environment mutation.",
+        "Declare and monitor bounded wall-time, GPU/shared-memory/host-commit budgets; stop on first allocation failure, native exit, lost telemetry or unresolved attempt.",
+        "Record owner acceptance separately from source/schema checks, completion, and licence review."
+      ],
+      "sources": [
+        {
+          "id": "S05",
+          "url": "https://github.com/Comfy-Org/ComfyUI/blob/master/comfy_extras/nodes_edit_model.py",
+          "version_or_date": "ComfyUI master retrieved 2026-11-25, immutable commit not resolved"
+        },
+        {
+          "id": "S20",
+          "url": "https://huggingface.co/black-forest-labs/flux-3-image-klein",
+          "version_or_date": "FLUX 3 Image Klein, October 15 2026 release"
+        },
+        {
+          "id": "S21",
+          "url": "https://huggingface.co/black-forest-labs/flux-3-image-klein-comfy",
+          "version_or_date": "Official Comfy distribution, retrieved 2026-11-25"
+        },
+        {
+          "id": "S22",
+          "url": "https://github.com/black-forest-labs/flux-3-image-klein",
+          "version_or_date": "Official inference repository, retrieved 2026-11-25"
+        },
+        {
+          "id": "S23",
+          "url": "https://github.com/Comfy-Org/workflow_templates/blob/main/templates/image_flux3_klein_distilled_image_edit.json",
+          "version_or_date": "Official distilled edit template, main retrieved 2026-11-25"
+        },
+        {
+          "id": "S24",
+          "url": "https://bfl.ai/blog/flux-3-image-klein",
+          "version_or_date": "Official October 15 2026 release post"
+        },
+        {
+          "id": "S25",
+          "url": "https://github.com/huggingface/diffusers/blob/main/docs/source/en/api/pipelines/flux3.md",
+          "version_or_date": "Diffusers main Flux3 pipeline documentation"
+        },
+        {
+          "id": "S35",
+          "url": "https://huggingface.co/black-forest-labs/flux-3-image-klein/blob/main/LICENSE.md",
+          "version_or_date": "FLUX Kommunity License v1.0"
+        }
+      ]
+    },
+    {
+      "id": "frontier-qwen21-base-multiref",
+      "state": "planned",
+      "verified": false,
+      "runtime_admitted": false,
+      "available_in_pinned_primary_portfolio": false,
+      "graph_is_authored_proposal": true,
+      "graph": {
+        "1": {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "__OWNER_INSTALLED_ALIAS_QWEN_IMAGE_21_BASE_INT8_CONVROT__",
+            "weight_dtype": "default"
+          }
+        },
+        "2": {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "__OWNER_INSTALLED_ALIAS_QWEN3VL8B_INT8_CONVROT__",
+            "type": "qwen_image",
+            "device": "default"
+          }
+        },
+        "3": {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "__OWNER_INSTALLED_ALIAS_QWEN_IMAGE_21_VAE_BF16__"
+          }
+        },
+        "4": {
+          "class_type": "TextEncodeQwenImage21",
+          "inputs": {
+            "clip": [
+              "2",
+              0
+            ],
+            "prompt": "__REQUIRED_EDIT_CAPTION_WITH_IMAGE1_IMAGE2_IMAGE3_ROLE_MAPPING__",
+            "negative_prompt": "",
+            "resolution": 1024,
+            "vae": [
+              "3",
+              0
+            ],
+            "images.image_1": [
+              "10",
+              0
+            ],
+            "images.image_2": [
+              "20",
+              0
+            ],
+            "images.image_3": [
+              "21",
+              0
+            ]
+          }
+        },
+        "6": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "9",
+              0
+            ],
+            "positive": [
+              "4",
+              0
+            ],
+            "negative": [
+              "4",
+              1
+            ],
+            "latent_image": [
+              "4",
+              2
+            ],
+            "seed": 2026112501,
+            "steps": 25,
+            "cfg": 1.0,
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "denoise": 1.0
+          }
+        },
+        "7": {
+          "class_type": "VAEDecode",
+          "inputs": {
+            "samples": [
+              "6",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ]
+          }
+        },
+        "8": {
+          "class_type": "SaveImage",
+          "inputs": {
+            "images": [
+              "11",
+              0
+            ],
+            "filename_prefix": "Planned/P35-B-20261125-1/qwen21-multiref"
+          }
+        },
+        "9": {
+          "class_type": "QwenImage21Cache",
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "device": "auto",
+            "dtype": "default"
+          }
+        },
+        "10": {
+          "class_type": "LoadImage",
+          "inputs": {
+            "image": "__OWNER_INPUT_ALIAS_CHARACTER_IDENTITY__"
+          }
+        },
+        "11": {
+          "class_type": "SplitImageWithAlpha",
+          "inputs": {
+            "image": [
+              "7",
+              0
+            ]
+          }
+        },
+        "20": {
+          "class_type": "LoadImage",
+          "inputs": {
+            "image": "__OWNER_INPUT_ALIAS_POSE_GUIDE__"
+          }
+        },
+        "21": {
+          "class_type": "LoadImage",
+          "inputs": {
+            "image": "__OWNER_INPUT_ALIAS_STYLE_REFERENCE__"
+          }
+        }
+      },
+      "graph_sha256_canonical": "6759f2ab98dec88f79cfc07a1f05cb9310f732e4994ae582d9afb5732445b939",
+      "sidecar_preset": {
+        "id": "frontier-qwen21-base-multiref",
+        "name": "Planned Qwen Image 2.1 base multi-reference edit",
+        "state": "planned",
+        "verified": false,
+        "runtime_admitted": false,
+        "submit_enabled": false,
+        "backend_id": "__OWNER_QUALIFIED_QWEN21_BACKEND__",
+        "graph_key": "frontier-qwen21-base-multiref",
+        "positive": [
+          "4",
+          "prompt"
+        ],
+        "seed": [
+          "6",
+          "seed"
+        ],
+        "steps": [
+          "6",
+          "steps"
+        ],
+        "cfg": [
+          "6",
+          "cfg"
+        ],
+        "reference_slots": [
+          {
+            "role": "identity",
+            "binding": [
+              "10",
+              "image"
+            ],
+            "conditioning_binding": [
+              "4",
+              "images.image_1"
+            ],
+            "prompt_label": "<image1>",
+            "contribution": "Character design, costume and identity",
+            "avoid": "Source pose or background"
+          },
+          {
+            "role": "pose",
+            "binding": [
+              "20",
+              "image"
+            ],
+            "conditioning_binding": [
+              "4",
+              "images.image_2"
+            ],
+            "prompt_label": "<image2>",
+            "contribution": "Pose, camera and contact geometry",
+            "avoid": "Pose actor identity, clothes or drawing marks"
+          },
+          {
+            "role": "style",
+            "binding": [
+              "21",
+              "image"
+            ],
+            "conditioning_binding": [
+              "4",
+              "images.image_3"
+            ],
+            "prompt_label": "<image3>",
+            "contribution": "Specified rendering traits only",
+            "avoid": "Style-image character identity, costume or composition"
+          }
+        ],
+        "reference_board": {
+          "min": 3,
+          "max": 3,
+          "policy": "Exactly three role-bound references for the first proposed condition; extra actors or references require a new manifest and separate qualification."
+        },
+        "negative": [
+          "4",
+          "negative_prompt"
+        ],
+        "reference_resolution": [
+          "4",
+          "resolution"
+        ]
+      },
+      "source_ids": [
+        "S14",
+        "S15",
+        "S16",
+        "S18",
+        "S19",
+        "S33",
+        "S34"
+      ],
+      "source_version": "Upstream source read 2026-11-25; immutable upstream commit and installed object_info comparison pending.",
+      "terms": {
+        "model_and_official_repository": "Qwen Research License2026-09-20, research/evaluation non-commercial scope; owner permission unresolved",
+        "encoder": "Qwen3-VL8B Apache-2.0 upstream; exact repack must be pinned",
+        "vae": "Own Qwen2.1 distribution under its terms; do not substitute older Qwen VAE",
+        "runtime": "ComfyUI GPL-3.0"
+      },
+      "notes": [
+        "Authored extension of supplied qwen21-edit API structure; inherited25steps/CFG1/euler/simple/cacheauto-default is a proposed control, not official40step optimum or tested multi-reference setting.",
+        "Pinned Studio has one-reference isolated qwen21 route; the primary backend lacks this model class. This sidecar must not silently target primary or change backend configuration.",
+        "TextEncodeQwenImage21 has16 generic slots; official model maximum ten. This proposed condition uses three.",
+        "Reference image1 determines the output aspect and the encoder latent; sampling a different-sized latent shifts editing.",
+        "SplitImageWithAlpha RGB output matches supplied current qwen21-edit convention; alpha handling is not yet qualified for this three-reference route.",
+        "QwenImage21Cache auto/default is inherited and remains a distinct memory/quality condition; int8/int4 cache or Turbo would be new recipes.",
+        "Source image roles are intent declarations; successful identity/style/pose separation still requires owner evidence."
+      ],
+      "unresolved_before_runtime_admission": [
+        "Map every __OWNER_ placeholder to a verified owner-installed alias or required prompt; record file bytes, immutable source revision and terms.",
+        "Confirm all node types, input names including dotted dynamic fields, output indices and enum choices against the selected installed backend object_info.",
+        "Confirm backend/runtime/driver/custom-op versions and GPU ownership; satisfy existing admission gate without environment mutation.",
+        "Declare and monitor bounded wall-time, GPU/shared-memory/host-commit budgets; stop on first allocation failure, native exit, lost telemetry or unresolved attempt.",
+        "Record owner acceptance separately from source/schema checks, completion, and licence review."
+      ],
+      "sources": [
+        {
+          "id": "S14",
+          "url": "https://github.com/Comfy-Org/ComfyUI/blob/master/comfy_extras/nodes_qwen.py",
+          "version_or_date": "ComfyUI master retrieved 2026-11-25, immutable commit not resolved"
+        },
+        {
+          "id": "S15",
+          "url": "https://huggingface.co/Qwen/Qwen-Image-2.1",
+          "version_or_date": "Qwen Image 2.1, released September 20 2026"
+        },
+        {
+          "id": "S16",
+          "url": "https://github.com/QwenLM/Qwen-Image-2.1",
+          "version_or_date": "Official Qwen2.1 repository, release September 20 2026; Turbo October 9"
+        },
+        {
+          "id": "S18",
+          "url": "https://docs.comfy.org/tutorials/image/qwen/qwen-image-2-1",
+          "version_or_date": "Comfy official tutorial, retrieved 2026-11-25"
+        },
+        {
+          "id": "S19",
+          "url": "https://github.com/Comfy-Org/workflow_templates/blob/main/templates/image_qwen_image_2_1_image_edit.json",
+          "version_or_date": "Official Qwen2.1 edit template, main retrieved 2026-11-25"
+        },
+        {
+          "id": "S33",
+          "url": "https://huggingface.co/Qwen/Qwen-Image-2.1/blob/main/LICENSE",
+          "version_or_date": "Qwen Research License, September 20 2026; viewed short commit f52e6a5"
+        },
+        {
+          "id": "S34",
+          "url": "https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct",
+          "version_or_date": "Qwen3-VL8B upstream card"
+        }
+      ]
+    }
+  ]
+}

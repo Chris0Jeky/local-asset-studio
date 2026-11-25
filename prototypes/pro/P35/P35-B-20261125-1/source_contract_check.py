@@ -23,6 +23,8 @@ import sys
 import tempfile
 from types import SimpleNamespace
 
+sys.dont_write_bytecode = True
+
 
 ROUTES = {"klein4-reference", "klein9-copy-pose", "klein9-skeleton", "qwen-3ref"}
 PINNED_REVISION = "0270760a3d4fd9e005a1788bba59d8242b77c2f4"

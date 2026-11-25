@@ -7,6 +7,9 @@ import hashlib
 import json
 from pathlib import Path, PurePosixPath, PureWindowsPath
 import re
+import sys
+
+sys.dont_write_bytecode = True
 
 MAX_JSON_BYTES = 1024 * 1024
 HEX = re.compile(r'[0-9a-f]{64}')

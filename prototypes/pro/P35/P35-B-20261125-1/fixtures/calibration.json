@@ -1,0 +1,203 @@
+{
+  "examples": {
+    "owner_labels_unavailable": {
+      "rows": [],
+      "spec": {
+        "cohort": [],
+        "development_groups": [
+          "development-a"
+        ],
+        "direction": "higher",
+        "frozen_at": "2026-11-25T00:00:00Z",
+        "holdout_revealed_at": "2026-11-25T02:00:00Z",
+        "id": "owner-labels-unavailable",
+        "kind": "subjective_rubric",
+        "owner_declaration": null,
+        "schema": "studio.metric-calibration/v1",
+        "source": "owner_library",
+        "spec_sha256": "eac6527e2b84860db7a11b5d73a138aaa6035acb8f1ec60434c9f0aec7b89fff",
+        "threshold": 0.75
+      }
+    },
+    "synthetic_inverted": {
+      "rows": [
+        {
+          "asset_id": "asset-0",
+          "output_sha256": "3dd3f8d1db39a536c4f48318eda8e4a804f53fbc2b25b94e3aa98b201be050da",
+          "scored_at": "2026-11-25T01:00:00Z",
+          "source_group": "lineage-0",
+          "spec_sha256": "399ddfe2f6b3c03e8c352e4c0d4d80c3a2c1a5bea84c7a4506392f36e3aa1cd8",
+          "value": 0.1
+        },
+        {
+          "asset_id": "asset-1",
+          "output_sha256": "0cf457e24a479f02fd4d34540389f720f0807dcff92a7562108165b2637ea82f",
+          "scored_at": "2026-11-25T01:00:00Z",
+          "source_group": "lineage-1",
+          "spec_sha256": "399ddfe2f6b3c03e8c352e4c0d4d80c3a2c1a5bea84c7a4506392f36e3aa1cd8",
+          "value": 0.9
+        },
+        {
+          "asset_id": "asset-2",
+          "output_sha256": "5a0717cb6596468ea1dffa86011f9b0f497348d80421835b51799f9aeb455642",
+          "scored_at": "2026-11-25T01:00:00Z",
+          "source_group": "lineage-2",
+          "spec_sha256": "399ddfe2f6b3c03e8c352e4c0d4d80c3a2c1a5bea84c7a4506392f36e3aa1cd8",
+          "value": 0.1
+        },
+        {
+          "asset_id": "asset-3",
+          "output_sha256": "d9f313aef2d97e58def0511fdc17512d53e6b30d578860ae04b5288c6a239010",
+          "scored_at": "2026-11-25T01:00:00Z",
+          "source_group": "lineage-3",
+          "spec_sha256": "399ddfe2f6b3c03e8c352e4c0d4d80c3a2c1a5bea84c7a4506392f36e3aa1cd8",
+          "value": 0.9
+        }
+      ],
+      "spec": {
+        "cohort": [
+          {
+            "asset_id": "asset-0",
+            "label_source": "synthetic",
+            "output_sha256": "3dd3f8d1db39a536c4f48318eda8e4a804f53fbc2b25b94e3aa98b201be050da",
+            "owner_id": "synthetic-owner",
+            "owner_mark": "keep",
+            "source_group": "lineage-0",
+            "split": "holdout"
+          },
+          {
+            "asset_id": "asset-1",
+            "label_source": "synthetic",
+            "output_sha256": "0cf457e24a479f02fd4d34540389f720f0807dcff92a7562108165b2637ea82f",
+            "owner_id": "synthetic-owner",
+            "owner_mark": "not_this",
+            "source_group": "lineage-1",
+            "split": "holdout"
+          },
+          {
+            "asset_id": "asset-2",
+            "label_source": "synthetic",
+            "output_sha256": "5a0717cb6596468ea1dffa86011f9b0f497348d80421835b51799f9aeb455642",
+            "owner_id": "synthetic-owner",
+            "owner_mark": "keep",
+            "source_group": "lineage-2",
+            "split": "holdout"
+          },
+          {
+            "asset_id": "asset-3",
+            "label_source": "synthetic",
+            "output_sha256": "d9f313aef2d97e58def0511fdc17512d53e6b30d578860ae04b5288c6a239010",
+            "owner_id": "synthetic-owner",
+            "owner_mark": "not_this",
+            "source_group": "lineage-3",
+            "split": "holdout"
+          }
+        ],
+        "development_groups": [
+          "development-a"
+        ],
+        "direction": "higher",
+        "frozen_at": "2026-11-25T00:00:00Z",
+        "holdout_revealed_at": "2026-11-25T02:00:00Z",
+        "id": "synthetic-rubric",
+        "kind": "subjective_rubric",
+        "owner_declaration": null,
+        "schema": "studio.metric-calibration/v1",
+        "source": "synthetic",
+        "spec_sha256": "399ddfe2f6b3c03e8c352e4c0d4d80c3a2c1a5bea84c7a4506392f36e3aa1cd8",
+        "threshold": 0.75
+      }
+    },
+    "synthetic_perfect": {
+      "rows": [
+        {
+          "asset_id": "asset-0",
+          "output_sha256": "3dd3f8d1db39a536c4f48318eda8e4a804f53fbc2b25b94e3aa98b201be050da",
+          "scored_at": "2026-11-25T01:00:00Z",
+          "source_group": "lineage-0",
+          "spec_sha256": "399ddfe2f6b3c03e8c352e4c0d4d80c3a2c1a5bea84c7a4506392f36e3aa1cd8",
+          "value": 0.9
+        },
+        {
+          "asset_id": "asset-1",
+          "output_sha256": "0cf457e24a479f02fd4d34540389f720f0807dcff92a7562108165b2637ea82f",
+          "scored_at": "2026-11-25T01:00:00Z",
+          "source_group": "lineage-1",
+          "spec_sha256": "399ddfe2f6b3c03e8c352e4c0d4d80c3a2c1a5bea84c7a4506392f36e3aa1cd8",
+          "value": 0.1
+        },
+        {
+          "asset_id": "asset-2",
+          "output_sha256": "5a0717cb6596468ea1dffa86011f9b0f497348d80421835b51799f9aeb455642",
+          "scored_at": "2026-11-25T01:00:00Z",
+          "source_group": "lineage-2",
+          "spec_sha256": "399ddfe2f6b3c03e8c352e4c0d4d80c3a2c1a5bea84c7a4506392f36e3aa1cd8",
+          "value": 0.9
+        },
+        {
+          "asset_id": "asset-3",
+          "output_sha256": "d9f313aef2d97e58def0511fdc17512d53e6b30d578860ae04b5288c6a239010",
+          "scored_at": "2026-11-25T01:00:00Z",
+          "source_group": "lineage-3",
+          "spec_sha256": "399ddfe2f6b3c03e8c352e4c0d4d80c3a2c1a5bea84c7a4506392f36e3aa1cd8",
+          "value": 0.1
+        }
+      ],
+      "spec": {
+        "cohort": [
+          {
+            "asset_id": "asset-0",
+            "label_source": "synthetic",
+            "output_sha256": "3dd3f8d1db39a536c4f48318eda8e4a804f53fbc2b25b94e3aa98b201be050da",
+            "owner_id": "synthetic-owner",
+            "owner_mark": "keep",
+            "source_group": "lineage-0",
+            "split": "holdout"
+          },
+          {
+            "asset_id": "asset-1",
+            "label_source": "synthetic",
+            "output_sha256": "0cf457e24a479f02fd4d34540389f720f0807dcff92a7562108165b2637ea82f",
+            "owner_id": "synthetic-owner",
+            "owner_mark": "not_this",
+            "source_group": "lineage-1",
+            "split": "holdout"
+          },
+          {
+            "asset_id": "asset-2",
+            "label_source": "synthetic",
+            "output_sha256": "5a0717cb6596468ea1dffa86011f9b0f497348d80421835b51799f9aeb455642",
+            "owner_id": "synthetic-owner",
+            "owner_mark": "keep",
+            "source_group": "lineage-2",
+            "split": "holdout"
+          },
+          {
+            "asset_id": "asset-3",
+            "label_source": "synthetic",
+            "output_sha256": "d9f313aef2d97e58def0511fdc17512d53e6b30d578860ae04b5288c6a239010",
+            "owner_id": "synthetic-owner",
+            "owner_mark": "not_this",
+            "source_group": "lineage-3",
+            "split": "holdout"
+          }
+        ],
+        "development_groups": [
+          "development-a"
+        ],
+        "direction": "higher",
+        "frozen_at": "2026-11-25T00:00:00Z",
+        "holdout_revealed_at": "2026-11-25T02:00:00Z",
+        "id": "synthetic-rubric",
+        "kind": "subjective_rubric",
+        "owner_declaration": null,
+        "schema": "studio.metric-calibration/v1",
+        "source": "synthetic",
+        "spec_sha256": "399ddfe2f6b3c03e8c352e4c0d4d80c3a2c1a5bea84c7a4506392f36e3aa1cd8",
+        "threshold": 0.75
+      }
+    }
+  },
+  "schema": "p35.calibration-fixtures/v1",
+  "scope": "Synthetic software demonstration. No owner images, owner labels, generations, or artistic acceptance are claimed."
+}
