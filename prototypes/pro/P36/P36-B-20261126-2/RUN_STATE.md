@@ -3,18 +3,22 @@ run: P36-B-20261126-2
 lane: P36
 part: B
 base: 0270760a
-phase: planning
-updated: 2026-11-26T23:03Z
+phase: building
+updated: 2026-11-26T23:07Z
 
 ## Items
-- [ ] 1. Audit Studio lifecycle and Lumenfold pack contracts; define identity kill criteria.
-- [ ] 2. Implement linked family records, identity scorer, and fail-closed transition gates.
-- [ ] 3. Implement Lumenfold export validation and adversarial reproducible evidence.
-- [ ] 4. Publish first-character route plan, cross-repo adoption, and import-side issue.
+- [ ] 1. Audit Studio lifecycle and Lumenfold pack contracts; retain prior owned-source kernel.
+- [ ] 2. Implement current Workspace authority, semantic identity vetoes and durable attempt admission.
+- [ ] 3. Implement conflict-safe Lumenfold export and adversarial reproducible evidence.
+- [ ] 4. Publish first-character route plan, cross-repo adoption, and import-side issue update.
 - [ ] 5. Complete proving checks, hashes, branch inventory, and ready-for-review handoff.
 
 ## Next
-Read the pinned Studio status, operations, catalog and existing character/workspace modules; inspect Lumenfold pipelines/characters, packs and lf-characters-3d. Use the attached source snapshot only after verifying its blob identities against commit 0270760a. Build the bounded offline prototype under prototypes/pro/P36/P36-B-20261126-2/ and reports under docs/programmes/systems/research/pro/P36/P36-B-20261126-2/.
+Read DESIGN.md and UPSTREAM.json. Previous P36 PR #2046 is open/unmerged; the retained kernel here is byte-identical to head 80b274e. Implement studio_authority.py against the pinned app/workspace.py schema, plus attempt_ledger.py. Integrate the semantic scorer and guarded exporter from isolated subagent workspaces. Keep all new code in this run directory. Prior regression tests are prepared locally and will be pushed in the next batch. Linux full-suite discovery is running; inspect .runtime/pro/P36-B-20261126-2/full-suite.log before claiming any result.
 
 ## Not pushed yet
-- (none)
+- prototypes/pro/P36/P36-B-20261126-2/test_pipeline.py
+- prototypes/pro/P36/P36-B-20261126-2/test_consistency.py
+- prototypes/pro/P36/P36-B-20261126-2/test_export.py
+- prototypes/pro/P36/P36-B-20261126-2/test_review_regressions.py
+
