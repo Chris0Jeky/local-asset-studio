@@ -18,7 +18,9 @@ import pipeline
 
 class ExportGuardTests(unittest.TestCase):
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory()
+        runtime = pipeline.REPO_ROOT / '.runtime' / 'pro' / 'P36-B-20261126-2' / 'tests'
+        runtime.mkdir(parents=True, exist_ok=True)
+        self.temp = tempfile.TemporaryDirectory(dir=runtime)
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         self.assets = self.root / 'store' / 'packs' / 'p36-fixture'
