@@ -6,6 +6,7 @@ import copy
 import hashlib
 import importlib.metadata
 import json
+import math
 import os
 from pathlib import Path
 import platform
@@ -128,9 +129,14 @@ def prove_attempts(out):
     job['status'] = 'uncertain'; (root / 'state.json').write_bytes(p.canonical_bytes(job))
     changed = attempts.inspect(path, family_id=parameters['family_id'], stages=['turnaround'], experiments=context['experiments'])
     check(not changed['passed'], 'Changed terminal observation was reused')
+    changed_refused = False
+    try: attempts.reserve(path, **{**parameters, 'request_id': 'later-request', 'job_id': 'later-job'})
+    except p.PipelineError: changed_refused = True
+    check(changed_refused, 'Changed terminal observation allowed a fresh reservation')
     return {'new_reservations': 1, 'same_request_reissued': 0, 'fresh_request_while_unresolved_refused': refused,
             'no_artifact_or_prompt_required_to_block': True, 'explicit_exact_resolution_pass': settled['passed'],
             'changed_resolved_observation_blocks': not changed['passed'], 'generation_submissions': 0,
+            'fresh_request_after_changed_resolution_refused': changed_refused,
             'worker_integration': 'planned; every future attempt must reserve and persist its exact marker'}
 
 
@@ -211,6 +217,7 @@ def main(argv=None):
     parser.add_argument('--tests-only', action='store_true')
     parser.add_argument('--lumenfold-root', help='Existing trusted checkout/snapshot; only pinned validator/schema are loaded')
     parser.add_argument('--check-evidence', help='Compare the deterministic evidence with this committed JSON')
+    parser.add_argument('--check-hashes', help='Compare all seven deterministic output hashes with this UTF-8 LF manifest')
     parser.add_argument('--repetitions', type=int, default=50)
     args = parser.parse_args(argv)
     try:
@@ -244,7 +251,8 @@ def main(argv=None):
         ordered = sorted(nanoseconds)
         write(out / 'timing.json', {'scope': 'Linux/Windows host Python descriptor-check overhead only, not GPU throughput',
               'repetitions': len(ordered), 'median_ms': statistics.median(ordered) / 1e6,
-              'p95_ms': ordered[max(0, int(len(ordered) * .95) - 1)] / 1e6,
+              'p95_ms': ordered[math.ceil(len(ordered) * .95) - 1] / 1e6,
+              'p95_method': 'nearest-rank-ceiling',
               'min_ms': ordered[0] / 1e6, 'max_ms': ordered[-1] / 1e6})
         deterministic = ['evidence.json', 'family.json', 'workspace-binding.json', 'semantic-policy.json',
                          'annotations.json', 'metadata.json', 'pack.json']
@@ -252,6 +260,9 @@ def main(argv=None):
         with (out / 'OUTPUT_HASHES.sha256').open('x', encoding='utf-8', newline='\n') as handle: handle.write(hashes)
         if args.check_evidence:
             check(p.load_json(args.check_evidence) == evidence, 'Deterministic evidence differs from the recorded file')
+        if args.check_hashes:
+            check(Path(args.check_hashes).read_bytes() == hashes.encode('utf-8'),
+                  'Deterministic output hashes differ from the recorded manifest')
         print(json.dumps({'passed': True, 'tests': tests['tests'], 'skipped': len(tests['skipped']),
                           'semantic_false_accepts': semantics['semantic_false_accepts'],
                           'authority_false_accepts': current['current_authority_false_accepts'],

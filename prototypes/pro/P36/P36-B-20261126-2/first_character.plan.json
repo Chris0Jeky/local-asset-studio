@@ -1,0 +1,392 @@
+{
+  "schema": "las.p36-first-character-plan/1",
+  "run": "P36-B-20261126-2",
+  "evidence_state": "planned",
+  "purpose": "Recover exact accepted Sable A2, then reuse attributable source through eight independently gated stages.",
+  "documentation": [
+    "docs/programmes/systems/research/pro/P36/P36-B-20261126-2/FIRST_CHARACTER.md",
+    "docs/programmes/systems/research/pro/P36/P36-B-20261126-2/SOURCES.md"
+  ],
+  "submission_payload": null,
+  "generation_authorized_by_this_plan": false,
+  "observed_generation_attempts": 0,
+  "observed_native_executions": 0,
+  "source_pins": {
+    "studio": "0270760a3d4fd9e005a1788bba59d8242b77c2f4",
+    "lumenfold": "19d86763944e842cbce6a3b6ae13f7abc1464b37",
+    "prior_p36_open_pr": 2046,
+    "prior_p36_head": "80b274e8dde6b0333c4d39a9473f6e15e41f38e1",
+    "catalog_sha256": "8a246463e974720a70140d71ceabf8ca66dd962467d302011a2e1eed029ec214",
+    "library_sha256": "819bab253a4003eb2f9dfa87aaa153b35e25d86686edb66b7a7f148a1cadfcf4"
+  },
+  "target": {
+    "character": "Sable",
+    "revision_label": "A2",
+    "resolution_state": "unresolved",
+    "exact_anchor_asset_id": null,
+    "exact_anchor_sha256": null,
+    "native_source_sha256": null,
+    "near_eye_portrait_sha256": null,
+    "paired_wide_sha256": null,
+    "acceptance_receipt": null,
+    "current_review_subject": null,
+    "current_authority_observation": null,
+    "do_not_substitute": [
+      "legacy slender",
+      "older palette",
+      "Kiri A4",
+      "generated reconstruction"
+    ]
+  },
+  "authority": {
+    "new_cast_studies": "Current 2026-11-14 hold remains; no blanket restart inferred.",
+    "fighter_finishing": "2026-11-19 instruction was scoped to supplied inputs.",
+    "accepted_demo_record": "2026-11-20 record names Sable A2 but does not resolve exact hashes or all stage scopes.",
+    "anima": "Retain the 2026-11-01 owner position; generic permission is not reopened.",
+    "recheck_before": [
+      "queue_admission",
+      "selected_head_transition",
+      "draft_export",
+      "native_import"
+    ]
+  },
+  "identity": {
+    "state": "planned",
+    "immutable_root_required": true,
+    "policy": null,
+    "direct_root_comparison_each_stage": true,
+    "required_views_all_pass": true,
+    "unknown_missing_uncertain_or_stale_blocks": true,
+    "high_mean_cannot_override_critical_failure": true,
+    "perceptual_identity_verified": false,
+    "calibration_denominator": null,
+    "held_out_owner_labels_required": true,
+    "manual_descriptors_are_not_image_verification": true
+  },
+  "gates": [
+    {
+      "id": "G0",
+      "stage": "concept",
+      "state": "planned",
+      "admissible": false,
+      "requires": "Exact A2 bytes and current accepted scope; source mapping unresolved."
+    },
+    {
+      "id": "G1",
+      "stage": "turnaround",
+      "state": "planned",
+      "admissible": false,
+      "requires": "Front/left/right/back identity and scoped acceptance of unseen construction."
+    },
+    {
+      "id": "G2",
+      "stage": "expression",
+      "state": "planned",
+      "admissible": false,
+      "requires": "Neutral/smile/surprise/determination retain immutable identity."
+    },
+    {
+      "id": "G3",
+      "stage": "outfit",
+      "state": "planned",
+      "admissible": false,
+      "requires": "Canonical V0 plus one scoped V1; protected regions remain equal."
+    },
+    {
+      "id": "G4",
+      "stage": "mesh",
+      "state": "planned",
+      "admissible": false,
+      "requires": "Matched views, separated parts, usable topology/UV/scale; source rights recorded."
+    },
+    {
+      "id": "G5",
+      "stage": "rig",
+      "state": "planned",
+      "admissible": false,
+      "requires": "Deformation/contact/grip and actual native expression controls."
+    },
+    {
+      "id": "G6",
+      "stage": "toon",
+      "state": "planned",
+      "admissible": false,
+      "requires": "Matched neutral/warm/cool palette, face, hair, outline and shadow review."
+    },
+    {
+      "id": "G7",
+      "stage": "unreal_pack",
+      "state": "planned",
+      "admissible": false,
+      "requires": "Exact selected artifacts and separate Studio handoff / downstream native acceptance."
+    }
+  ],
+  "stage_routes": [
+    {
+      "stage": "concept",
+      "primary": "reuse-existing-a2",
+      "fallback": "recover-exact-backup",
+      "gate": "G0",
+      "state": "planned"
+    },
+    {
+      "stage": "turnaround",
+      "primary": "retained-a2-native-views",
+      "fallback": "character-sheet-klein-9b",
+      "gate": "G1",
+      "state": "planned"
+    },
+    {
+      "stage": "expression",
+      "primary": "anima-ref-adapter-turbo",
+      "fallback": "anima-ref-adapter",
+      "gate": "G2",
+      "state": "planned"
+    },
+    {
+      "stage": "outfit",
+      "primary": "protected-krita-blender-edit",
+      "fallback": "flux-edit",
+      "gate": "G3",
+      "state": "planned"
+    },
+    {
+      "stage": "mesh",
+      "primary": "retained-a2-native-repair",
+      "fallback": "trellis-rgba",
+      "gate": "G4",
+      "state": "planned"
+    },
+    {
+      "stage": "rig",
+      "primary": "retained-a2-rig",
+      "fallback": "fighter-manny-transfer",
+      "gate": "G5",
+      "state": "planned"
+    },
+    {
+      "stage": "toon",
+      "primary": "retained-a2-animelook",
+      "fallback": "source-mtoon-diagnostic",
+      "gate": "G6",
+      "state": "planned"
+    },
+    {
+      "stage": "unreal_pack",
+      "primary": "draft-pack-consumer-adoption",
+      "fallback": "native-import-fighter-receipt",
+      "gate": "G7",
+      "state": "planned"
+    }
+  ],
+  "catalog_routes": [
+    {
+      "id": "anima-ref-adapter-turbo",
+      "state": "planned",
+      "graph": "workflows/api/anima-ref-adapter-turbo-api.json",
+      "model_pins": [
+        "anima-turbo-v1-1",
+        "anima-ref-adapter-v2-r64",
+        "anima-text",
+        "vae-qwen-image"
+      ],
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "steps": 8,
+        "cfg": 1,
+        "reference_guidance": 1,
+        "sampler": "er_sde",
+        "scheduler": "simple"
+      }
+    },
+    {
+      "id": "anima-ref-adapter",
+      "state": "planned",
+      "graph": "workflows/api/anima-ref-adapter-api.json",
+      "model_pins": [
+        "anima-base-v1-0",
+        "anima-ref-adapter-v2-r64",
+        "anima-text",
+        "vae-qwen-image"
+      ],
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "steps": 30,
+        "cfg": 4.5,
+        "reference_guidance": 4.5,
+        "sampler": "er_sde",
+        "scheduler": "simple"
+      }
+    },
+    {
+      "id": "character-sheet-klein-9b",
+      "state": "planned",
+      "graph": "workflows/api/character-sheet-klein-9b-api.json",
+      "model_pins": [
+        "flux2-klein-9b-q6k",
+        "qwen3-8b-fp8mixed",
+        "tripleview-klein9b-v1",
+        "vae-flux2"
+      ],
+      "controls": {
+        "width": 1536,
+        "height": 1024,
+        "steps": 8,
+        "cfg": 1,
+        "sampler": "euler",
+        "scheduler_node": "Flux2Scheduler",
+        "lora_strength": 1
+      }
+    },
+    {
+      "id": "flux-edit",
+      "state": "planned",
+      "graph": "workflows/api/flux-edit-api.json",
+      "model_pins": [
+        "flux2-klein-4b-fp8",
+        "qwen3-4b-encoder",
+        "vae-flux2"
+      ],
+      "controls": {
+        "reference_binding": [
+          "14",
+          "image"
+        ],
+        "prompt_binding": [
+          "4",
+          "text"
+        ],
+        "protected_composition_required": true
+      }
+    },
+    {
+      "id": "trellis-rgba",
+      "state": "planned",
+      "graph": "workflows/api/trellis-rgba-api.json",
+      "model_pins": [
+        "trellis-diffusion",
+        "trellis-shape",
+        "trellis-texture",
+        "trellis-vision"
+      ],
+      "controls": {
+        "input": "explicit_rgba",
+        "crop": 1024,
+        "sparse_steps": 12,
+        "shape_steps": 20,
+        "texture_steps": 12,
+        "shape_resolution": 512,
+        "atlas": 1024
+      }
+    }
+  ],
+  "future_2d_budget": {
+    "state": "proposed_not_armed",
+    "total_cap": 12,
+    "batch_size": 1,
+    "turnaround": {
+      "primary": 1,
+      "fallback": 1
+    },
+    "expressions": {
+      "primary": 3,
+      "fallback": 1
+    },
+    "outfit_assistance": {
+      "primary": 2,
+      "fallback": 1
+    },
+    "shared_reserve": 3,
+    "counts": [
+      "warmup",
+      "failed",
+      "cancelled",
+      "uncertain",
+      "repair"
+    ],
+    "max_repairs_per_case": 1,
+    "gpu_occupancy_cap_seconds": 1800,
+    "observation_ceiling_seconds": {
+      "anima": 120,
+      "klein": 300
+    },
+    "unknown_job_action": "Stop new work; reconcile retained prompt/job without resubmission or blind process termination."
+  },
+  "native_budget": {
+    "state": "proposed_not_armed",
+    "normal_neural_3d_calls": 0,
+    "separately_authorized_trellis_attempts": 1,
+    "trellis_observation_ceiling_seconds": 1200,
+    "automatic_retry": false,
+    "max_revisions_per_failing_stage": 2,
+    "existing_fighter_gates": {
+      "body_triangles": 60000,
+      "surface_error_p99_mm_below": 2,
+      "edge_stretch_p99_9_below": 2,
+      "left_behind_vertices_below": 100,
+      "grip_error_mm_below": 20,
+      "reaction_contact_frames": [
+        0,
+        1
+      ]
+    },
+    "native_expression_playback_required": true
+  },
+  "host": {
+    "os": "Windows 11",
+    "gpu": "RX 9070 XT",
+    "vram_gb": 16,
+    "runtime": "Existing ROCm/HIP setup",
+    "cpu": "i5-13600K",
+    "ram_gb": 32,
+    "available_to_this_run": false,
+    "readiness_observed": false,
+    "upstream_trellis_gap": "Upstream states Linux/NVIDIA >=24GB; local Radeon integration is separate experimental evidence."
+  },
+  "licence_and_source": {
+    "state": "recorded_facts_separate_from_owner_clearance",
+    "source_index": "SOURCES.md",
+    "whole_chain_cleared": false,
+    "installed_bytes_verified": false,
+    "unresolved": [
+      "Exact A2 inputs/acquisition",
+      "Anima compact encoder derivation",
+      "Exact adapter licence fetch",
+      "FLUX VAE exact source",
+      "TripleView permissions",
+      "DINO-NAF derivation/terms",
+      "Native templates/motions/textures"
+    ],
+    "no_automatic_download_or_install": true
+  },
+  "experiment": {
+    "state": "planned",
+    "armed": false,
+    "name": "candidate-sheet-to-native-view contradiction check",
+    "comparison_root": "Immutable accepted A2 plus explicitly accepted supplemental construction",
+    "self_generated_views_never_become_identity_authority": true,
+    "kill_gates": [
+      "Identity mismatch",
+      "Unknown hidden construction",
+      "Missing current authority",
+      "Unresolved source/terms",
+      "Missing exact dependency",
+      "OOM/device fault",
+      "Deformation failure",
+      "Attempt/time cap"
+    ]
+  },
+  "handoff": {
+    "state": "planned",
+    "pack_status": "draft",
+    "lumenfold_issue": 3175,
+    "general_importer_limit": "Existing pack importer uses VRM-humanoid/J_Bip; Manny requires a separate actual consumer path.",
+    "models_ue": null,
+    "native_import_receipt": null,
+    "playable": false,
+    "consumer_adoption_required": true,
+    "unreal_parity_implied_by_mtoon": false
+  }
+}

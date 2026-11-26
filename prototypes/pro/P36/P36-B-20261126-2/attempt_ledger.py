@@ -148,6 +148,17 @@ def reserve(path, *, family_id, stage, request_id, job_id, intent_sha256, experi
         pending = db.execute("SELECT 1 FROM attempts WHERE family_id=? AND stage=? AND state='unresolved'",
                              (family_id, stage)).fetchone()
         p.require(pending is None, 'An unresolved attempt blocks this stage; observe it, never repeat it', 'uncertain_submission')
+        # A terminal row is only as current as its retained observation. Refuse
+        # another request if those bytes disappeared, changed, or became uncertain.
+        # Replaying an existing request above remains observation-only.
+        for retained in db.execute('SELECT * FROM attempts WHERE family_id=? AND stage=?', (family_id, stage)):
+            try:
+                observed_state, observed_hash = _observation(experiments, retained)
+                p.require(observed_state == retained['state'] and observed_hash == retained['observation_sha256'],
+                          'Retained terminal observation changed')
+            except (ValueError, OSError, KeyError, TypeError) as error:
+                raise p.PipelineError('Changed terminal evidence blocks a fresh attempt; inspect the retained job',
+                                      'resolved_attempt_evidence_changed') from error
         p.require(db.execute('SELECT 1 FROM attempts WHERE job_id=?', (job_id,)).fetchone() is None,
                   'A retained job ID cannot be reused by another attempt')
         directory = Path(experiments).absolute() / 'runs' / job_id

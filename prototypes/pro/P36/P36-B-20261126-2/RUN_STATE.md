@@ -4,7 +4,7 @@ lane: P36
 part: B
 base: 0270760a
 phase: measuring
-updated: 2026-11-26T23:33Z
+updated: 2026-11-26T23:38Z
 
 ## Items
 - [x] 1. Audit Studio lifecycle and Lumenfold pack contracts; retain prior owned-source kernel. (commit 6fa8f3a)
@@ -14,11 +14,7 @@ updated: 2026-11-26T23:33Z
 - [ ] 5. Complete proving checks, hashes, branch inventory, and ready-for-review handoff.
 
 ## Next
-The independently reviewed admission integration is implemented: 23 focused tests pass, including revocation during final file verification, input-file changes during the last authority capture, and malformed diagnostic strings. Run prove.py against a new .runtime directory; the first combined proof is running at .runtime/pro/P36-B-20261126-2/proof-1. Inspect its tests.log and deterministic evidence, reproduce in a second directory, then commit EVIDENCE.json and OUTPUT_HASHES.sha256. Complete README.md, VERIFICATION.md, ADOPTION.md and REPORT.md, add the import-plan update to existing Lumenfold issue #3175, and publish report copies to the requested Drive folder. The full repository unittest command already passed 7,321 tests with 62 skips. No native generation/import ran.
+The first complete proof passed 197 tests, zero skips, all 26 copied fixture files and pinned Lumenfold file validation. Final independent review reproduced two additional boundary gaps: changed terminal evidence before a fresh reservation (fixed, 24 ledger tests pass) and copied destination changes during final live capture (bounded destination-observation guard being finished in admission.py). Reintegrate the admission guard, run prove.py twice in fresh .runtime directories, compare all seven output hashes, and commit EVIDENCE.json plus OUTPUT_HASHES.sha256. README and source-backed first-character/Lumenfold reports are published; REPORT.md, ADOPTION.md and VERIFICATION.md still need completion. Then add the existing Lumenfold #3175 issue update, save report copies to the requested Drive folder, validate the final Git inventory and mark PR #2049 ready. Do not run generation or the current native importer.
 
 ## Not pushed yet
-- prototypes/pro/P36/P36-B-20261126-2/first_character.plan.json
-- docs/programmes/systems/research/pro/P36/P36-B-20261126-2/FIRST_CHARACTER.md
-- docs/programmes/systems/research/pro/P36/P36-B-20261126-2/SOURCES.md
-- docs/programmes/systems/research/pro/P36/P36-B-20261126-2/LUMENFOLD_CONTRACT.md
-- docs/programmes/systems/research/pro/P36/P36-B-20261126-2/LUMENFOLD_SOURCES.json
+- (none)

@@ -118,6 +118,20 @@ class AttemptLedgerTests(unittest.TestCase):
         self.job(status='uncertain')
         self.assertFalse(self.inspect()['passed'])
 
+    def test_fresh_reservation_refuses_changed_terminal_observation(self):
+        attempt = self.reserve(); self.job(); ledger.resolve(self.path, attempt['attempt_id'], experiments=self.experiments)
+        self.job(status='uncertain')
+        self.assertFalse(self.inspect()['passed'])
+        with self.assertRaises(p.PipelineError): self.reserve('request-2', 'job-2')
+        replay = self.reserve()
+        self.assertFalse(replay['created'])
+        self.assertEqual(replay['action'], 'observe-existing')
+
+    def test_fresh_reservation_refuses_changed_completed_bytes(self):
+        attempt = self.reserve(); self.job(); ledger.resolve(self.path, attempt['attempt_id'], experiments=self.experiments)
+        self.job(outputs=[{'filename': 'different.png'}])
+        with self.assertRaises(p.PipelineError): self.reserve('request-2', 'job-2')
+
     def test_two_simultaneous_connections_admit_exactly_one(self):
         barrier = threading.Barrier(2)
         def submit(index):
