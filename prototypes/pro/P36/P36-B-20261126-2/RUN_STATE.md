@@ -4,7 +4,7 @@ lane: P36
 part: B
 base: 0270760a
 phase: building
-updated: 2026-11-26T23:17Z
+updated: 2026-11-26T23:23Z
 
 ## Items
 - [x] 1. Audit Studio lifecycle and Lumenfold pack contracts; retain prior owned-source kernel. (commit 6fa8f3a)
@@ -14,10 +14,11 @@ updated: 2026-11-26T23:17Z
 - [ ] 5. Complete proving checks, hashes, branch inventory, and ready-for-review handoff.
 
 ## Next
-The pinned kernel and source audit are in commit 6fa8f3a. Current Workspace authority is implemented in studio_authority.py and passes 26 real-schema SQLite tests (software fixtures only). Next implement attempt_ledger.py with durable no-output uncertainty blocking, then join current authority, old graph and new semantic checks in an admission CLI. The semantic and exporter modules are staged locally from isolated subagents. Linux full-suite discovery is still running; inspect .runtime/pro/P36-B-20261126-2/full-suite.log before claiming its result.
+Workspace authority (30 tests) and durable attempt admission (22 tests) now include independent-review corrections. Semantic vetoes (26 tests) and guarded export (12 tests) are implemented; retained prior kernel contributes 84 tests. Integrate admission.py and its real-Workspace staging tests next; the worker must retain the new p36_attempt nonce/source/intent marker before submission, and native queue wiring remains planned. Full repository unittest discovery passed 7,321 tests in 615.292 seconds, with 62 skips; app and catalog remain unchanged. Current prototype checkpoint suite is running under .runtime/pro/P36-B-20261126-2/prototype-checkpoint.log. Then author prove.py, deterministic evidence, report and ADOPTION.md, update Lumenfold issue #3175, and verify the entire published inventory.
 
 ## Not pushed yet
-- prototypes/pro/P36/P36-B-20261126-2/sheet_identity.py
-- prototypes/pro/P36/P36-B-20261126-2/test_sheet_identity.py
-- prototypes/pro/P36/P36-B-20261126-2/export_guard.py
-- prototypes/pro/P36/P36-B-20261126-2/test_export_guard.py
+- prototypes/pro/P36/P36-B-20261126-2/first_character.plan.json
+- docs/programmes/systems/research/pro/P36/P36-B-20261126-2/FIRST_CHARACTER.md
+- docs/programmes/systems/research/pro/P36/P36-B-20261126-2/SOURCES.md
+- docs/programmes/systems/research/pro/P36/P36-B-20261126-2/LUMENFOLD_CONTRACT.md
+- docs/programmes/systems/research/pro/P36/P36-B-20261126-2/LUMENFOLD_SOURCES.json

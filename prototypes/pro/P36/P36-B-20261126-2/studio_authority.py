@@ -9,8 +9,15 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 import sqlite3
+import sys
 
 import pipeline as p
+
+# The pinned Studio validator has no runtime initialization; use its card contract.
+_APP = str(p.REPO_ROOT / 'app')
+if str(p.REPO_ROOT) not in sys.path: sys.path.insert(0, str(p.REPO_ROOT))
+if _APP not in sys.path: sys.path.insert(0, _APP)
+from characters import validate_body as validate_character_body
 
 
 def _exact(value, fields, label):
@@ -99,6 +106,12 @@ def capture_authority(experiments, family, binding, *, stages=None):
     validate_binding(family, binding)
     selected = set(family['heads']) if stages is None else set(stages)
     p.require(selected and selected <= set(family['heads']), 'Invalid authority stage selection')
+    def include_parents(stage):
+        for parent in p.PARENTS[stage]:
+            p.require(parent in family['heads'], 'Live authority requires every ancestor')
+            if parent not in selected:
+                selected.add(parent); include_parents(parent)
+    for stage in tuple(selected): include_parents(stage)
     experiments = Path(experiments).absolute(); root = experiments / 'workspace'
     blockers, snapshot = [], {'workspace_id': None, 'card': None, 'assets': {}, 'jobs': {}}
 
@@ -119,6 +132,10 @@ def capture_authority(experiments, family, binding, *, stages=None):
             if not card or card['kind'] != 'character' or card['trashed_at'] is not None:
                 block('card_unavailable')
             else:
+                p.canonical_bytes(card)
+                p.require(type(card['revision']) is int and 0 <= card['revision'] < 2**53,
+                          'Invalid stored character revision')
+                validate_character_body(p.decode_json(card['body']))
                 snapshot['card'] = {k: card[k] for k in ('id', 'kind', 'revision', 'lineage', 'body', 'trashed_at')}
                 if card['revision'] != binding['card_revision']: block('card_changed')
                 lineage = p.decode_json(card['lineage'])
@@ -138,6 +155,13 @@ def capture_authority(experiments, family, binding, *, stages=None):
                     row = dict(found) if found else None
                     if not row or row['privacy'] != 'regular' or row['trashed_at'] is not None:
                         block('asset_unavailable', stage, artifact['key']); continue
+                    p.canonical_bytes(row)
+                    p.require(row['review'] in ('unreviewed', 'selected', 'needs_work', 'rejected'),
+                              'Unknown stored asset review state')
+                    p.require(type(row['metadata_revision']) is int and 0 <= row['metadata_revision'] < 2**53
+                              and type(row['bytes']) is int and 0 < row['bytes'] <= 8 * 1024**3,
+                              'Invalid stored asset metadata')
+                    p.require(type(row['job_id']) is str and p.ENTITY.fullmatch(row['job_id']), 'Invalid stored job ID')
                     record = {k: row[k] for k in ('id', 'job_id', 'output_index', 'sha256', 'bytes', 'path',
                                                   'review', 'privacy', 'metadata_revision', 'trashed_at')}
                     snapshot['assets'][stage + '/' + artifact['key']] = record
@@ -153,6 +177,9 @@ def capture_authority(experiments, family, binding, *, stages=None):
                     acceptance = dict(acceptance_row) if acceptance_row else None
                     if acceptance is None: block('acceptance_missing', stage, artifact['key'])
                     else:
+                        p.canonical_bytes(acceptance)
+                        p.require(type(acceptance['accepted_at']) in (float, int) and acceptance['accepted_at'] >= 0,
+                                  'Invalid acceptance time')
                         record['acceptance'] = {k: acceptance[k] for k in ('id', 'asset_id', 'sha256', 'use', 'reviewer',
                                                                          'accepted_at', 'withdrawn_at', 'brief_id', 'slot', 'criteria')}
                         if acceptance['withdrawn_at'] is not None: block('acceptance_withdrawn', stage, artifact['key'])

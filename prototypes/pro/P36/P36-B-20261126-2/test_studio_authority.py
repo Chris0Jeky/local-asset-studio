@@ -148,5 +148,24 @@ class CurrentAuthorityTests(unittest.TestCase):
         self.assertFalse(result['passed'])
         self.assertFalse(missing.exists())
 
+    def test_requested_stage_subset_still_rechecks_its_root_acceptance(self):
+        self.edit('UPDATE asset_acceptances SET withdrawn_at=2 WHERE id=?', ('test-concept-front',))
+        result = sa.capture_authority(self.c['experiments'], self.c['family'], self.c['binding'], stages=['turnaround'])
+        self.assertFalse(result['passed'])
+        self.assertIn('concept', result['stages'])
+
+    def test_unknown_live_review_state_is_not_treated_as_good(self):
+        self.edit('UPDATE assets SET review=?', ('invalid-state',))
+        self.reject('authority_unavailable')
+
+    def test_malformed_character_body_is_not_current_authority(self):
+        for value in ('not-json', '{}', '{"who":4}', '{"who":"fixture","unknown":true}'):
+            self.edit('UPDATE cards SET body=?', (value,))
+            self.reject('authority_unavailable')
+
+    def test_non_json_sqlite_primitive_returns_failed_report(self):
+        self.edit('UPDATE assets SET review=?', (b'rejected',))
+        self.reject('authority_unavailable')
+
 
 if __name__ == '__main__': unittest.main()
