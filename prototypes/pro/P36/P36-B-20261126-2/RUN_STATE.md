@@ -4,17 +4,17 @@ lane: P36
 part: B
 base: 0270760a
 phase: publishing
-updated: 2026-11-26T23:42Z
+updated: 2026-11-26T23:49Z
 
 ## Items
 - [x] 1. Audit Studio lifecycle and Lumenfold pack contracts; retain prior owned-source kernel. (commit 6fa8f3a)
 - [x] 2. Implement current Workspace authority, semantic identity vetoes and durable attempt admission. (commit c465277)
-- [ ] 3. Implement conflict-safe Lumenfold export and adversarial reproducible evidence.
-- [ ] 4. Publish first-character route plan, cross-repo adoption, and import-side issue update.
+- [x] 3. Implement conflict-safe Lumenfold export and adversarial reproducible evidence. (commit a5e2e9f)
+- [x] 4. Publish first-character route plan, cross-repo adoption, and import-side issue update. (commit a5e2e9f)
 - [ ] 5. Complete proving checks, hashes, branch inventory, and ready-for-review handoff.
 
 ## Next
-The final proof passed 202 tests, zero skips, with the exact pinned Lumenfold validator; 26 copied fixture files verified. All independent-review regressions are fixed, including fresh reservation after changed terminal evidence and late staged asset/sidecar mutation. A second standalone proof is running at .runtime/pro/P36-B-20261126-2/proof-final-2 with --check-evidence and --check-hashes to confirm all seven deterministic outputs; optional consumer-only tests may skip there. Complete VERIFICATION.md with that result, run final tracked-inventory repository validation, and verify all README-named files against the published branch. Publish the prepared addendum to existing Lumenfold #3175 and exact report copies to Drive Lumenfold/pro/P36-B-20261126-2/. Then set phase done with tests/evidence/hashes headers and mark PR #2049 ready. No generation/native import occurred; live worker/native consumer adoption remains planned.
+Both final proof runs passed and reproduced all seven deterministic hashes: 202 tests with zero skips using the pinned Lumenfold validator; 202 discovered with two explicitly optional consumer skips in the standalone run. Final repository validation passed 4,967 tracked paths; all 4,930 original base files are unchanged. VERIFICATION.md records commands, host, results, logs and limits. The Lumenfold #3175 addendum was published and read back at issuecomment-7205798489; four report-only copies were uploaded and metadata-checked in the requested Drive run folder. Read back this checkpoint's entire GitHub tree, confirm every local/README deliverable matches and no extra path changed, then add the final tests/evidence/hashes headers, tick item 5 with this checkpoint SHA, push phase done, update PR #2049's full result/dispositions body and mark it ready. Native adoption and Sable A2 mapping remain planned.
 
 ## Not pushed yet
 - (none)

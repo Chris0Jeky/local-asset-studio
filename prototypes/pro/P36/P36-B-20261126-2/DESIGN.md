@@ -25,12 +25,12 @@ Alternatives considered: another offline receipt engine would duplicate #2046; i
 ## Task and interface ledger
 
 - [x] 1. Retain the pinned prior kernel and source inventory; audit current consumer hazards.
-- [x] 2. `studio_authority.py`: `capture_authority(experiments, family, binding, *, stages)` reads the actual schema without instantiating/migrating Workspace; validates live asset/card/acceptance rows, retained jobs and bytes. `check_transition(...)` recomputes the old graph gate plus current authority and semantic vetoes.
+- [x] 2. `studio_authority.py`: `capture_authority(experiments, family, binding, *, stages)` reads the actual schema without instantiating/migrating Workspace; validates live asset/card/acceptance rows, retained jobs and bytes. `admission.check_transition(...)` recomputes the old graph gate plus current authority and semantic vetoes.
 - [x] 3. `attempt_ledger.py`: reserve an immutable request identity in a local SQLite ledger before a caller could dispatch; unresolved reservation blocks another request. A matching request is idempotent evidence, never a new submission. Resolution is bound to exact retained job evidence.
 - [x] 4. `sheet_identity.py`: recompute the retained proxy then apply exact anatomical-side/semantic checks under a frozen concept-bound policy. Cosmetic contexts can change only named costume anchors; identity anchors remain mandatory.
 - [x] 5. `export_guard.py`: `build_guarded_manifest(...)` rejects conflicting repeated-file facts before the retained exporter deduplicates, then adds explicit consumer admission limitations under the existing root extension.
 - [x] 6. `prove.py`: one offline command runs inherited and new tests, real Workspace fixture cases and deterministic evidence; outputs go under a fresh `.runtime/` directory. Store compact summaries and SHA-256 manifests on the branch.
-- [ ] 7. Publish source-backed first-character gates, cross-repo adoption and an additive plan on Lumenfold issue #3175. Run the repository proving commands and inspect every README-linked deliverable before marking ready.
+- [x] 7. Publish source-backed first-character gates, cross-repo adoption and an additive plan on Lumenfold issue #3175. Run the repository proving commands and inspect every README-linked deliverable before marking ready. Final command results and handoff checks are recorded in `VERIFICATION.md` and `RUN_STATE.md`.
 
 ## Review focus
 
