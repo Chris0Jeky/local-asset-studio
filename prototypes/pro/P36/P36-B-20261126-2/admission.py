@@ -20,6 +20,7 @@ import json
 import os
 from pathlib import Path
 import sqlite3
+import stat
 import sys
 
 if __name__ == '__main__':
@@ -239,6 +240,32 @@ def _verify_copied(pack, store):
         p.verify_artifact(store, record)
 
 
+def _destination_observation(output, relative_paths):
+    """Observe ordinary destination mutations without another long byte read.
+
+This is an optimistic local snapshot, not an atomic cross-system transaction.
+A future consumer must still rehash bytes and revalidate current authority.
+"""
+    observed = {}
+    try:
+        for relative in sorted(relative_paths):
+            path = p.contained_file(output, relative)
+            current = path.stat(follow_symlinks=False)
+            p.require(stat.S_ISREG(current.st_mode), 'Staged destination is not a regular file',
+                      'staged_destination_changed')
+            observed[relative] = (current.st_dev, current.st_ino, current.st_size, current.st_mtime_ns)
+    except (ValueError, OSError) as error:
+        raise p.PipelineError('Cannot observe staged destination: ' + str(error),
+                              'staged_destination_changed') from error
+    return observed
+
+
+def _check_destination_observation(output, expected):
+    current = _destination_observation(output, expected)
+    p.require(current == expected, 'A staged asset or sidecar changed during final verification or capture',
+              'staged_destination_changed')
+
+
 def _consumer_check(lumenfold_root, pack, assets):
     """Execute only the inspected pure validator, never a native importer."""
     root = Path(lumenfold_root)
@@ -311,7 +338,7 @@ fingerprinted again, including metadata and policy/annotations.
         output.mkdir(parents=True, exist_ok=False)
         created = True
         report['partial_retained'] = True
-        _write_new(output / 'PARTIAL.json', {'schema': 'las.p36-export-staging/1', 'phase': 'staging',
+        partial_hash = _write_new(output / 'PARTIAL.json', {'schema': 'las.p36-export-staging/1', 'phase': 'staging',
             'family_sha256': initial_inputs['family'], 'pack_sha256': pack_hash,
             'generation_submitted': False, 'native_import_performed': False,
             'completion_marker': 'READY.json', 'retry_allowed': False})
@@ -332,14 +359,20 @@ fingerprinted again, including metadata and policy/annotations.
         p.require(_inputs(family, binding, metadata, semantic_policy, annotations) == initial_inputs,
                   'An export input changed during staging', 'inputs_changed')
         _check_input_files(_input_files, initial_inputs)
+        staged_metadata = [('PARTIAL.json', partial_hash), ('family.json', initial_inputs['family']),
+                           ('pack.json', pack_hash), ('current-authority.json', p.digest(first)),
+                           ('binding.json', initial_inputs['binding']),
+                           ('semantic-policy.json', initial_inputs['semantic_policy']),
+                           ('annotations.json', initial_inputs['annotations']),
+                           ('character-metadata.json', initial_inputs['metadata'])]
+        staged_paths = [f"assets/packs/{pack['id']}/{record['path']}" for record in pack['files'].values()]
+        staged_paths.extend(filename for filename, _ in staged_metadata)
+        destination_before = _destination_observation(output, staged_paths)
         _verify_copied(pack, store)
-        for filename, expected in [('family.json', initial_inputs['family']), ('pack.json', pack_hash),
-                                   ('current-authority.json', p.digest(first)), ('binding.json', initial_inputs['binding']),
-                                   ('semantic-policy.json', initial_inputs['semantic_policy']),
-                                   ('annotations.json', initial_inputs['annotations']),
-                                   ('character-metadata.json', initial_inputs['metadata'])]:
+        for filename, expected in staged_metadata:
             p.require(p.digest(_read_input(output / filename)) == expected,
                       'A staged metadata file changed: ' + filename, 'staged_metadata_changed')
+        _check_destination_observation(output, destination_before)
         # Finish potentially long copied-byte and metadata checks before the last
         # live authority/attempt capture. A withdrawal during those checks must
         # not be followed by a ready marker based on an older capture.
@@ -355,6 +388,10 @@ fingerprinted again, including metadata and policy/annotations.
         p.require(_inputs(family, binding, metadata, semantic_policy, annotations) == initial_inputs,
                   'An export input changed at final admission', 'inputs_changed')
         _check_input_files(_input_files, initial_inputs)
+        # Close ordinary late destination changes with short stat observations.
+        # Rehashing every destination byte here would open another long authority
+        # window. This closure still grants no native import or atomicity claim.
+        _check_destination_observation(output, destination_before)
         ready = {'schema': 'las.p36-ready-handoff/1', 'family_sha256': initial_inputs['family'],
                  'pack_sha256': pack_hash, 'authority_sha256': p.digest(first),
                  'input_fingerprints': initial_inputs, 'admission_sha256': fresh['report_sha256'],

@@ -280,6 +280,49 @@ class AdmissionTests(unittest.TestCase):
         self.assertFalse((self.root / 'bundle' / 'READY.json').exists())
         self.assertTrue((self.root / 'bundle' / 'PARTIAL.json').is_file())
 
+    def assert_late_destination_change_blocks(self, mutate):
+        out = self.root / 'bundle'
+        original = admission.studio_authority.capture_authority
+        calls = 0
+        def change(*args, **kwargs):
+            nonlocal calls
+            result = original(*args, **kwargs)
+            calls += 1
+            if calls == 2:
+                self.assertTrue(result['passed'], result)
+                mutate(out)
+            return result
+        with patch.object(admission.studio_authority, 'capture_authority', side_effect=change):
+            report = self.export(out)
+        self.assertEqual(calls, 2)
+        self.assert_blocked(report, 'staged_destination_changed')
+        self.assertFalse((out / 'READY.json').exists())
+        self.assertTrue((out / 'PARTIAL.json').is_file())
+
+    def test_copied_asset_changed_during_final_authority_capture_blocks_ready(self):
+        def mutate(out):
+            pack = p.load_json(out / 'pack.json')
+            record = next(iter(pack['files'].values()))
+            path = out / 'assets' / 'packs' / pack['id'] / record['path']
+            path.write_bytes(b'corrupt-staged-bytes')
+        self.assert_late_destination_change_blocks(mutate)
+
+    def test_staged_pack_changed_during_final_authority_capture_blocks_ready(self):
+        def mutate(out):
+            path = out / 'pack.json'
+            pack = p.load_json(path)
+            pack['notes'] = 'Changed in destination during final source authority capture'
+            path.write_bytes(p.canonical_bytes(pack))
+        self.assert_late_destination_change_blocks(mutate)
+
+    def test_staged_authority_sidecar_changed_during_final_capture_blocks_ready(self):
+        def mutate(out):
+            path = out / 'current-authority.json'
+            authority = p.load_json(path)
+            authority['late_destination_mutation'] = True
+            path.write_bytes(p.canonical_bytes(authority))
+        self.assert_late_destination_change_blocks(mutate)
+
     def test_corrupt_ledger_is_a_failed_report(self):
         self.ledger.write_bytes(b'not a SQLite database')
         self.assert_blocked(self.check(), 'attempt_ledger_unavailable')
