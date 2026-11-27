@@ -55,11 +55,10 @@ python prototypes/pro/P36/P36-B-20261126-2/prove.py \
   --lumenfold-root "$P36_LUMENFOLD_ROOT"
 ```
 
-The optional validator runs only after its source SHA-256 equals
+The guarded staged-export path runs the optional validator only after its source SHA-256 equals
 `268588d7d01d09f9c597dce7c7dfafe050066586702676cfe633bad941af4de7` and the schema
 equals `9892f716abfff35a85088c5b5c798a8ae38ddbff50f1e67845f799c7af16a28a`.
-It checks actual copied files, not merely metadata. No import or engine execution
-is implied. Without this option, inspect the recorded consumer-test skip reason.
+The optional comparison unittest directly imports the independently trusted supplied validator; it does not independently precheck those hashes before that import. Use only the inspected trusted snapshot; the recorded runs used exactly those pinned bytes. Staged validation checks actual copied files, not merely metadata. No native import or engine execution is implied. Without this option, inspect the recorded consumer-test skip reason.
 
 Required proof result: exit **0**, deterministic evidence equals
 [EVIDENCE.json](EVIDENCE.json), all ten retained-file hashes match, semantic invalid
@@ -68,7 +67,7 @@ admissions **0/9**, zero reissues of the repeated ledger request, and refusal of
 the reproduced licence conflict. Inspect `tests-summary.json`, `tests.log`,
 `environment.json`, `staging-observation.json` and `OUTPUT_HASHES.sha256` in the new
 output. The final discovered prototype test count is recorded by the proof;
-component counts are not additive coverage claims.
+component counts are not additive coverage claims. The continuation has **303 discovered tests**. It adds **4/4 valid actual-index admissions**, **6/6 provenance refusals**, **12/12 changed-preparation refusals**, **23 matched dispatch cases with 10 expected simulated callbacks and 0 extras**, and **13/13 consumer outcomes**. All **11 deterministic output hashes** must match. The prior 202-test record remains in BASELINE_EVIDENCE.json.
 
 The separately run repository regression command was:
 
@@ -76,7 +75,7 @@ The separately run repository regression command was:
 python -m unittest discover -s tests
 ```
 
-It completed **7,321 tests in 615.292 seconds**, with **62 skips** and exit **0**.
+The first-pass run completed **7,321 tests in 615.292 seconds**, with **62 skips** and exit **0**. The continuation rerun also passed **7,321 tests**, **62 skips**, in **605.399 seconds**. VERIFICATION.md records both runs.
 [VERIFICATION.md](VERIFICATION.md) owns the complete proving record and applicable
 repository validation results. Reproducing the offline proof on Windows is a
 future environment check; this Linux result does not qualify ROCm/HIP, ComfyUI,
@@ -116,7 +115,27 @@ These variables are explicit existing paths, not discovery instructions.
 `.runtime/`. Preflight does not initialize it. Do not substitute the synthetic
 proof family for the missing real A2 binding.
 
-### Worker wiring remains planned
+### Implemented continuation seams
+
+The [Production factory](PRODUCTION_INTENT_API.md) captures the actual prepared
+plan and future deterministic job before `Studio.create_job`. It binds the
+catalog, template, model-library pins, actual model/input bytes, Workspace,
+project state and observed budget row. Source reads do not create new budget or
+runtime readiness. Trusted roots come from the caller, never from the candidate.
+
+The [dispatch coordinator](DISPATCH_API.md) implements the owned prepared
+reservation exception, permanent durable claim, post-marker authority check,
+immutable callback body and exact-observation reconciliation. Its only port is
+a local callback counter. The **23-case** matrix already covers four process
+crash boundaries and a three-process race. This is an implemented protocol lab,
+with real Studio preparation and SQLite, and simulated runtime conditions.
+
+The [handoff verifier](CONSUMER_API.md) implements the first software consumer
+stage: complete copied-byte/sidecar/semantic/subject validation and optional
+fresh source authority. Its result always denies native import and owner
+authentication. This can now be adopted without designing another manifest.
+
+### Existing worker wiring remains planned
 
 Studio agents must add the following sequence at the existing dispatch seam:
 
@@ -140,13 +159,22 @@ successful reservation is evidence of a reserved attempt, not a dispatch token.
 Every attempt must use this seam; omitted historical attempts cannot be recovered
 from an empty output folder.
 
-**Next software target:** exercise at least **7 mutation-boundary cases** through
-the wired worker: acceptance withdrawal, changed bytes, changed selected head,
-wrong Workspace/source root, mismatched marker/intent, crash after reservation
-with no prompt, and uncertain upstream response. Target **0 new submissions in
-all 7 blocked cases**, plus **1 submit-once valid control** whose repeated request
-produces **0 additional submissions**. Use a deterministic fake dispatcher first;
-these targets grant no real generation budget.
+**Next software target for Studio agents:** carry the tested coordinator into
+the existing `Production`/`Studio.create_job`/submit-once seam using the real
+budget and job/GPU ownership interfaces, with a counting fake transport. Run
+**12 boundary cases**: withdrawn acceptance, changed media, changed selected
+head, wrong Workspace/source root, changed prepared plan, changed model/input
+bytes, lost budget permission, lost lease, wrong pending marker/intent, crash
+after claim, lost response, and changed receipt before reconciliation. Target
+**0 callbacks for every pre-callback veto**, **0 additional callbacks after a
+retained claim**, and **1 exact callback for the valid control**. Keep ordinary
+admission/export blocked by unresolved work; carry no generic bypass flag.
+
+Run the current 303-test proof and the repository's two proving commands after
+adapting that seam. The measurable adoption change is **0 → 1 existing-worker
+adapter passing this matrix**. The generation budget remains **0** throughout
+that software exercise. The offline lab's 10 simulated callbacks are not real
+attempts and do not consume or authorize the proposed character budget.
 
 ## 4. Isolated draft handoff
 
@@ -187,7 +215,7 @@ concurrent writer or protect against later changes. There is no cross-process tr
 job files and the future native importer. A later withdrawal can invalidate a
 completed draft, so a consumer must never treat the marker as permanent authority.
 
-## 5. Lumenfold staged consumer: proposed, not installed
+## 5. Lumenfold: verifier implemented, native adoption planned
 
 **Do not feed this draft to the current direct importer.** At the inspected pin,
 `games/world3d/tools/import_packs.py` does not enforce the Studio extension or
@@ -198,10 +226,24 @@ and removes existing native pack content before the whole import succeeds.
 The advisory field is therefore a proposed consumer contract, not an installed
 access control. Keep staged output outside its scanned production roots.
 
-Under #3175, `lf-characters-3d` and Studio agents should implement a consumer that:
+The independent verifier is ready to call on an isolated handoff:
 
-1. Validates the marker, all sidecar hashes, schema/references and actual bytes;
-   rereads live selected ancestry and acceptance scope.
+```powershell
+py -3 prototypes/pro/P36/P36-B-20261126-2/handoff_verifier.py verify --bundle .runtime/pro/P36-B-20261126-2/adoption-proof-1/staged --allow-synthetic
+```
+
+For a real handoff, omit `--allow-synthetic`, supply `--require-current` and the
+explicit original `--experiments` and `--ledger` roots. Preserve its report
+alongside the native candidate. Offline integrity alone cannot detect a later
+withdrawal, and even a current pass has `native_import_allowed=false` until the
+native adoption contract is implemented. Keep the previous native pack intact.
+
+Under #3175, `lf-characters-3d` and Studio agents should adapt this verifier and
+implement the remaining consumer steps:
+
+1. Call the implemented verifier for the marker, sidecars, schema/references,
+   copied bytes, semantic gates and current selected authority. Bind that result
+   to the actual staged native input, then rehash at the mutation boundary.
 2. Applies the selected variant and explicit consumer choice, decodes the real
    rig/model, and checks joined topology, units, axes and expression availability.
    A Manny source must follow its actual fighter path; a renamed skeleton is not
@@ -215,7 +257,8 @@ Under #3175, `lf-characters-3d` and Studio agents should implement a consumer th
    scoped acceptance. A schema pass does not set `models.ue`, `playable` or a
    judged Versus result.
 
-**Next consumer target:** **1 valid isolated draft** plus **6 refusing cases**:
+**Next consumer target:** move **0 → 1 native adapter** using the implemented
+verifier, then prove **1 valid isolated draft** plus **6 refusing native cases**:
 revoked authority, changed source bytes, incompatible skeleton, missing expression,
 missing required material input and injected failure during promotion. Target
 **0 changes to the previous accepted native pack across all 6 failures**, and
@@ -246,5 +289,7 @@ requirements do not qualify the owner's 16 GB Radeon path.
 Generated, inspected, owner-accepted, intended-use-cleared and native-playable
 remain separate records. Preserve existing owner decisions rather than requesting
 them again; present only the exact unresolved A2 mapping or changed scope for the
-first owner decision. Worker wiring, consumer promotion/rollback and all native
-qualification remain planned until their own evidence is recorded.
+first owner decision. Existing worker wiring, consumer promotion/rollback and all native
+qualification remain planned until their own evidence is recorded. The protocol
+lab and independent verifier are implemented; their synthetic results are not
+owner art acceptance.

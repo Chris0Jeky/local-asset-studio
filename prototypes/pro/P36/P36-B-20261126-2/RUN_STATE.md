@@ -3,10 +3,10 @@ run: P36-B-20261126-2
 lane: P36
 part: B
 base: 0270760a
-phase: measuring
-updated: 2026-11-27T00:47Z
-tests: py -3 prototypes/pro/P36/P36-B-20261126-2/prove.py --tests-only --output .runtime/pro/P36-B-20261126-2/owner-tests-1
-evidence: py -3 prototypes/pro/P36/P36-B-20261126-2/prove.py --output .runtime/pro/P36-B-20261126-2/owner-proof-1 --check-evidence prototypes/pro/P36/P36-B-20261126-2/EVIDENCE.json --check-hashes prototypes/pro/P36/P36-B-20261126-2/OUTPUT_HASHES.sha256
+phase: publishing
+updated: 2026-11-27T00:56Z
+tests: py -3 prototypes/pro/P36/P36-B-20261126-2/prove.py --tests-only --output .runtime/pro/P36-B-20261126-2/owner-continuation-tests-1
+evidence: py -3 prototypes/pro/P36/P36-B-20261126-2/prove.py --output .runtime/pro/P36-B-20261126-2/owner-continuation-proof-1 --check-evidence prototypes/pro/P36/P36-B-20261126-2/EVIDENCE.json --check-hashes prototypes/pro/P36/P36-B-20261126-2/OUTPUT_HASHES.sha256
 hashes: prototypes/pro/P36/P36-B-20261126-2/OUTPUT_HASHES.sha256
 
 ## Items
@@ -22,14 +22,8 @@ hashes: prototypes/pro/P36/P36-B-20261126-2/OUTPUT_HASHES.sha256
 - [ ] 9. Publish expanded evidence, adoption and reviewed continuation closeout.
 
 ## Next
-Expanded prove.py now passes 303 tests without skips using the pinned Lumenfold validator; its first proof is .runtime/pro/P36-B-20261126-2/continuation-proof-1. All four new matrices and eleven hashes are implemented. A standalone fresh proof is running at continuation-proof-2 with committed-evidence/hash comparisons; inspect its log and tests-summary. The full repository suite remains running at full-suite-continuation.log. Publish measured EVIDENCE/OUTPUT_HASHES and the four compact matrix copies, README and updated ADOPTION in the next <=10-file commit. Complete CONTINUATION_REPORT.md and VERIFICATION.md with exact results, run validate-repo.py against the staged final file inventory, inspect all baseline blob hashes and branch/README links, update Lumenfold #3175 and Drive report, then commit done state and mark PR #2049 ready. Real generation, runtime qualification and native adoption remain planned.
+Both expanded proofs pass: 303 tests (0 skips with pinned Lumenfold validator, 2 optional skips standalone), all eleven deterministic hashes identical. The full repository suite passes 7,321 tests/62 skips/605.399 s; validate-repo.py passes 4,992 tracked paths, 98 graphs, 194 pins. All 4,930 fixed-base blobs match; local inventory has 62 text files and no broken relative Markdown links. Publish VERIFICATION.md and CONTINUATION_REPORT.md, then add the report-only Drive copy and a continuation adoption comment to existing Lumenfold issue #3175. Read the resulting GitHub tree and compare every changed path/blob with the local allowed-directory inventory, verify README targets, update PR body with issue disposition and limits, commit phase done with final headers, then mark PR #2049 ready. No main/other-branch push or merge; real generation/native qualification remains planned.
 
 ## Not pushed yet
-- prototypes/pro/P36/P36-B-20261126-2/EVIDENCE.json
-- prototypes/pro/P36/P36-B-20261126-2/OUTPUT_HASHES.sha256
-- prototypes/pro/P36/P36-B-20261126-2/INDEXING_EVIDENCE.json
-- prototypes/pro/P36/P36-B-20261126-2/PREPARATION_EVIDENCE.json
-- prototypes/pro/P36/P36-B-20261126-2/DISPATCH_EVIDENCE.json
-- prototypes/pro/P36/P36-B-20261126-2/CONSUMER_EVIDENCE.json
-- prototypes/pro/P36/P36-B-20261126-2/README.md
-- prototypes/pro/P36/P36-B-20261126-2/ADOPTION.md
+- prototypes/pro/P36/P36-B-20261126-2/VERIFICATION.md
+- docs/programmes/systems/research/pro/P36/P36-B-20261126-2/CONTINUATION_REPORT.md
