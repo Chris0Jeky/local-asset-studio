@@ -121,7 +121,7 @@ e84536074c43f5e18a5fe30fe51e1b6aa2d4ad0e1e9cf19470ea045ec4022d94  dispatch-revie
 
 ## Final publication audit
 
-Local publication inventory: **62 UTF-8/LF text files**, no images or binary outputs, **69 valid relative Markdown links**, every file below 300 KB and the complete deliverable below 3 MB. The largest file is the retained pipeline.py at 31,932 bytes. All 4,930 original base blobs match. The final GitHub tree is checked separately against these local bytes and this source inventory before ready-for-review; the final RUN_STATE records the completion commit. Exact final byte totals are reported in the PR after its inventory check.
+Local publication inventory: **62 UTF-8/LF text files**, no images or binary outputs, **69 valid relative Markdown links**, every file below 300 KB and the complete deliverable below 3 MB. The largest file is the retained pipeline.py at 31,932 bytes. All 4,930 original base blobs match. The GitHub tree at publication commit `70e69c0` was read through the connector: all **62** changed files exactly matched local Git blob hashes, all **4,930** original blobs were unchanged, all **28** README relative targets were on the branch, and there were **0** outside-scope changes or omitted deliverables. That checkpoint totaled **770,386 bytes**; the closing RUN_STATE/verification update is checked again before ready-for-review. Exact closing bytes are reported in the PR. The existing Lumenfold issue received continuation comment `7206910459`; the report-only Drive copy was uploaded and read back with matching name, 15,149-byte size and the existing run-folder parent. No main/other-branch push or merge occurred.
 
 Validator log SHA-256: `4852d553a888de72d26122d350067b1409a6a2aea7cf1a2ca5e493be31496252`.
 
