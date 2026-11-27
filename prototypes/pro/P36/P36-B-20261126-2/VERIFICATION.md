@@ -1,3 +1,134 @@
+# Continuation verification — 2026-11-27 UTC
+
+This section records the expanded continuation. The original proving record below
+is retained as history; BASELINE_EVIDENCE.json and BASELINE_OUTPUT_HASHES.sha256
+preserve its deterministic 202-test snapshot. Software evidence is implemented.
+No generated character, owner art review or native import is claimed.
+
+## Exact commands and outcomes
+
+All commands ran in `/workspace/scratch/fa96af8f7cc8/studio` on the Linux sandbox.
+Sources were read through the GitHub connector. No clone/fetch/raw-GitHub shell
+networking was used. All writes to GitHub used the connector and the authorized
+branch, with at most ten changed files in each commit.
+
+```sh
+python prototypes/pro/P36/P36-B-20261126-2/prove.py --output .runtime/pro/P36-B-20261126-2/continuation-proof-1 --lumenfold-root /workspace/scratch/fa96af8f7cc8/context_lumenfold/sources
+
+python prototypes/pro/P36/P36-B-20261126-2/prove.py --output .runtime/pro/P36-B-20261126-2/continuation-proof-2 --check-evidence prototypes/pro/P36/P36-B-20261126-2/EVIDENCE.json --check-hashes prototypes/pro/P36/P36-B-20261126-2/OUTPUT_HASHES.sha256
+
+python -m unittest discover -s tests
+
+python scripts/validate-repo.py
+```
+
+| Check | Outcome |
+| --- | --- |
+| Expanded proof with pinned Lumenfold pure validator/schema | **303 tests**, **0 skips**, 0 errors/failures, **119.901 s**, exit 0 |
+| Expanded standalone proof with recorded evidence/hash checks | **303 tests**, **2 optional source-comparison skips**, 0 errors/failures, **113.942 s**, exit 0 |
+| Deterministic comparison | **11/11 output hashes identical** across separate fresh directories; recorded evidence and hash manifest match |
+| Repository regression rerun | **7,321 tests**, **62 skips**, **605.399 s**, exit 0 |
+| Repository validator | **PASS**, exit 0: **98** preset graphs/bindings, **194** pinned assets, **4,992** tracked paths, **167** LoRA names, **743** media entries and **102** references |
+| Fixed-base byte audit | **4,930/4,930 Git blobs match** commit `0270760a3d4fd9e005a1788bba59d8242b77c2f4`; no base app/catalog/launch/source changes |
+
+The final reporting review also distinguished the staged-export helper's hash-before-execution guard from one optional comparison unittest, which directly imports its independently trusted supplied validator. The README and ADOPTION now state that boundary. The recorded source matched both pins; no result or code changed.
+
+The two optional skips are the exact-consumer-source tests in test_admission and
+test_export_guard. They passed in the first run using the independently supplied
+20-file pinned Lumenfold source snapshot. The second run did not inherit that
+root. The bundled exact schema remains checked in both runs. No Lumenfold native
+importer was started.
+
+The host environment was CPython **3.12.14**, built with **Clang 22.1.3**, on
+**Linux 6.18.57 x86-64 / glibc 2.41**. Existing package versions were Pillow
+**13.0.0**, jsonschema **4.26.0** and psutil **7.2.2**. No packages were upgraded.
+No C++ compiler was invoked; MSVC/C++ flags are not applicable. Windows-hosted
+Python, NTFS publication, MSVC, RX 9070 XT, ROCm/HIP, ComfyUI model execution,
+Blender and Unreal were not tested. The README provides the requested `py -3`
+owner command; cross-platform deterministic matching remains a measured owner
+check, not an inferred pass.
+
+## Runtime evidence and compact committed copies
+
+All generated fixtures, SQLite databases, process contexts, copied bundles,
+stdout, test logs and environment/timing observations remain uncommitted under
+`.runtime/pro/P36-B-20261126-2/`. A fresh output directory is mandatory. Existing
+output is refused and retained for inspection.
+
+EVIDENCE.json is the normalized aggregate. INDEXING_EVIDENCE.json,
+PREPARATION_EVIDENCE.json, DISPATCH_EVIDENCE.json and CONSUMER_EVIDENCE.json are
+compact copies of the four deterministic matrix outputs. OUTPUT_HASHES.sha256
+uses the eleven runtime output names; each line is `<sha256>  <relative path>`
+with LF endings. Random identities, source-root-bound receipts, timing and host
+observations are intentionally excluded from those deterministic files.
+
+| Proof matrix | Observed contract results |
+| --- | --- |
+| Actual indexing | 4/4 valid captures; 6/6 meaningful provenance changes refused; the old raw-equality predicate rejects all 4 valid controls |
+| Prepared intent | 12/12 changed preparations refused; 13 initial valid controls; 13 read-only cases preserve retained bytes and logical rows under the explicit SHM-mtime scope |
+| Durable dispatch | 23/23 outcomes, 10 expected simulated callbacks, 0 extras; four process-crash boundaries; one callback from three competing processes |
+| Independent consumer | 13/13 outcomes: 5 passes with their limits and 8 refusals; source withdrawal leaves offline integrity but fails requested current authority |
+| Existing semantics/authority | 0/8 invalid semantic passes; 0/9 stale-authority passes; all original controls retained |
+
+These are authored synthetic software cases, not an estimate of real-image
+identity precision/recall. The local callback counter counts every insertion and
+has no deduplication rule. It does not issue a request to a backend. Every native,
+owner-authentication and real-generation claim remains false.
+
+## Review-driven corrections and focused checks
+
+The actual-indexer correction first reproduced six failures against the former
+authority implementation, then passed 46 focused tests in the integrated root
+checkout (12.432 s). Consumer development reproduced and fixed a captured
+job/index/asset-ID inconsistency and late-destination integrity reporting; the
+root's 32-test consumer run passed in 19.403 s. Prepared-intent review reproduced
+a serialized integer/float graph alias and added strict canonical comparisons;
+its 24 focused tests passed before integration.
+
+Independent dispatch review reproduced mutable caller intent reaching a changed
+callback, wrong acknowledged prompt acceptance, and unconstrained reread during
+reconciliation. Canonical snapshots, exact prompt identity and transaction-pinned
+observation corrected them. Six independent regressions pass; the integrated
+coordinator/review/ledger focused run passed **53 tests in 10.806 s**. Four process
+crash boundaries are measured separately by the deterministic proof. A process
+driver class-identity issue was exposed by the first cross-process run and fixed
+by using the canonical simulation module in the CLI.
+
+A consumer test run initially stopped before fixture setup because the shared
+workspace volume was full. No external data was deleted; after capacity became
+available the focused and complete runs passed. This is not presented as an
+application failure or a successful test.
+
+Serial source reads are not a distributed transaction. SQLite `synchronous=FULL`
+and process-kill tests are not proof of physical power-loss survival. Synthetic
+backend/budget/lease values are not observations of the owner's workstation.
+The tested pre-create hook still needs adaptation into the actual existing
+worker, and native staged promotion/rollback remains planned in Lumenfold #3175.
+
+## Retained runtime log hashes
+
+These logs are uncommitted and reproducible; they are not part of the stable
+output manifest because timings/host observations vary.
+
+```text
+0cb6ecf2339dd44d19c91468deed8943f292b304cd84c7001a20eee2c43c0683  continuation-proof-1/tests.log
+41b985a5f7c8ef136202bcdbe997adb4c09af5a7db4f473ec2bd067c75ccc55c  continuation-proof-2/tests.log
+b1b9276162b3ce71cae3e5df3d9bb19b29ab6b8ebadb23c6dbc2d3950d948e50  full-suite-continuation.log
+60f9cd4e2f27063a139c118852b039609d8d7aef5c842dd943ff40f34dee680e  authority-indexing-continuation.log
+ad5a41e8205ddede640651d511f777d9cf3ecd5ae549790785517522d88a8845  consumer-continuation.log
+e84536074c43f5e18a5fe30fe51e1b6aa2d4ad0e1e9cf19470ea045ec4022d94  dispatch-reviewed.log
+```
+
+## Final publication audit
+
+Local publication inventory: **62 UTF-8/LF text files**, no images or binary outputs, **69 valid relative Markdown links**, every file below 300 KB and the complete deliverable below 3 MB. The largest file is the retained pipeline.py at 31,932 bytes. All 4,930 original base blobs match. The final GitHub tree is checked separately against these local bytes and this source inventory before ready-for-review; the final RUN_STATE records the completion commit. Exact final byte totals are reported in the PR after its inventory check.
+
+Validator log SHA-256: `4852d553a888de72d26122d350067b1409a6a2aea7cf1a2ca5e493be31496252`.
+
+---
+
+## Original first-pass verification record
+
 # P36-B-20261126-2 verification record
 
 ## Result and evidence state

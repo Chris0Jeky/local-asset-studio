@@ -25,5 +25,4 @@ hashes: prototypes/pro/P36/P36-B-20261126-2/OUTPUT_HASHES.sha256
 Both expanded proofs pass: 303 tests (0 skips with pinned Lumenfold validator, 2 optional skips standalone), all eleven deterministic hashes identical. The full repository suite passes 7,321 tests/62 skips/605.399 s; validate-repo.py passes 4,992 tracked paths, 98 graphs, 194 pins. All 4,930 fixed-base blobs match; local inventory has 62 text files and no broken relative Markdown links. Publish VERIFICATION.md and CONTINUATION_REPORT.md, then add the report-only Drive copy and a continuation adoption comment to existing Lumenfold issue #3175. Read the resulting GitHub tree and compare every changed path/blob with the local allowed-directory inventory, verify README targets, update PR body with issue disposition and limits, commit phase done with final headers, then mark PR #2049 ready. No main/other-branch push or merge; real generation/native qualification remains planned.
 
 ## Not pushed yet
-- prototypes/pro/P36/P36-B-20261126-2/VERIFICATION.md
-- docs/programmes/systems/research/pro/P36/P36-B-20261126-2/CONTINUATION_REPORT.md
+- (none)
