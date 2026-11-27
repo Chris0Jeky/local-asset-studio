@@ -1,0 +1,198 @@
+{
+  "run": "P36-B-20261126-2",
+  "source_access": "GitHub connector only; no repository clone or raw shell fetch",
+  "sources": [
+    {
+      "repository": "Chris0Jeky/lumenfold",
+      "revision": "19d86763944e842cbce6a3b6ae13f7abc1464b37",
+      "path": "docs/ORDERS.md",
+      "git_blob_sha": "e2e78502694c18b55e99422ac16a65cde72e6e3c",
+      "url": "https://github.com/Chris0Jeky/lumenfold/blob/19d86763944e842cbce6a3b6ae13f7abc1464b37/docs/ORDERS.md",
+      "bytes": 61503,
+      "sha256": "038fb80d99e0cb7a25e1a1b879bf5cb721c8005cde9612d6b3375fb389ff7f83"
+    },
+    {
+      "repository": "Chris0Jeky/lumenfold",
+      "revision": "19d86763944e842cbce6a3b6ae13f7abc1464b37",
+      "path": "AGENTS.md",
+      "git_blob_sha": "cb6628d9ad2569d7d380e7b05b69685528b533e3",
+      "url": "https://github.com/Chris0Jeky/lumenfold/blob/19d86763944e842cbce6a3b6ae13f7abc1464b37/AGENTS.md",
+      "bytes": 5094,
+      "sha256": "5221b6ca5e4ab77b54da5c3af581d49c02eac8a0eeddb58f90d4d5cc4d4c3798"
+    },
+    {
+      "repository": "Chris0Jeky/lumenfold",
+      "revision": "19d86763944e842cbce6a3b6ae13f7abc1464b37",
+      "path": "CLAUDE.md",
+      "git_blob_sha": "538ef125e57acd74ae7546c3a74f821a8a8d221a",
+      "url": "https://github.com/Chris0Jeky/lumenfold/blob/19d86763944e842cbce6a3b6ae13f7abc1464b37/CLAUDE.md",
+      "bytes": 6638,
+      "sha256": "534b28ba4b01f82b570a824fcb76f5bda40905650b9331194acee30fdb7142df"
+    },
+    {
+      "repository": "Chris0Jeky/lumenfold",
+      "revision": "19d86763944e842cbce6a3b6ae13f7abc1464b37",
+      "path": "CHARTER.md",
+      "git_blob_sha": "f8ccb1cdaf87706f8eceed79ff7044f89b8c5d21",
+      "url": "https://github.com/Chris0Jeky/lumenfold/blob/19d86763944e842cbce6a3b6ae13f7abc1464b37/CHARTER.md",
+      "bytes": 12028,
+      "sha256": "1a73e92347d1933c4078b2980e6721ec118e00b7e218495b308992637e3919cc"
+    },
+    {
+      "repository": "Chris0Jeky/lumenfold",
+      "revision": "19d86763944e842cbce6a3b6ae13f7abc1464b37",
+      "path": "docs/RESUME.md",
+      "git_blob_sha": "c0772af0e41aeabfe58c68c41ce6407164e7fb7b",
+      "url": "https://github.com/Chris0Jeky/lumenfold/blob/19d86763944e842cbce6a3b6ae13f7abc1464b37/docs/RESUME.md",
+      "bytes": 9611,
+      "sha256": "49407b1bd33b0b5243554098fefd5f655da78af3d63fe80ac3f0246c1766c097"
+    },
+    {
+      "repository": "Chris0Jeky/lumenfold",
+      "revision": "19d86763944e842cbce6a3b6ae13f7abc1464b37",
+      "path": "docs/lanes/lf-characters-3d.md",
+      "git_blob_sha": "18f19c1a00656b378c21fab47623c7beacf4902d",
+      "url": "https://github.com/Chris0Jeky/lumenfold/blob/19d86763944e842cbce6a3b6ae13f7abc1464b37/docs/lanes/lf-characters-3d.md",
+      "bytes": 11963,
+      "sha256": "1165edad0636bb09084f05bac0edc716beef2f31a205ff966fb58a743fa8f6dd"
+    },
+    {
+      "repository": "Chris0Jeky/lumenfold",
+      "revision": "19d86763944e842cbce6a3b6ae13f7abc1464b37",
+      "path": "docs/lanes/lf-anime-look.md",
+      "git_blob_sha": "712b4fa99456faa55d1b0c330c153f00bcfec501",
+      "url": "https://github.com/Chris0Jeky/lumenfold/blob/19d86763944e842cbce6a3b6ae13f7abc1464b37/docs/lanes/lf-anime-look.md",
+      "bytes": 11270,
+      "sha256": "3ba2b36ca333a5bada97e72719175d98058526a817dcb364cc997ab830e77f1b"
+    },
+    {
+      "repository": "Chris0Jeky/lumenfold",
+      "revision": "19d86763944e842cbce6a3b6ae13f7abc1464b37",
+      "path": "pipelines/characters/README.md",
+      "git_blob_sha": "56ebaf96ab491a65299a0a17bbfdfde042428de9",
+      "url": "https://github.com/Chris0Jeky/lumenfold/blob/19d86763944e842cbce6a3b6ae13f7abc1464b37/pipelines/characters/README.md",
+      "bytes": 3044,
+      "sha256": "95f6978c0777ab0d4418c98d2466cd65ebccd2c70d39587a0caa9c97ccfe37f1"
+    },
+    {
+      "repository": "Chris0Jeky/lumenfold",
+      "revision": "19d86763944e842cbce6a3b6ae13f7abc1464b37",
+      "path": "packs/pack.schema.json",
+      "git_blob_sha": "fd00e2fb6de69b80b3b0756ab89fcbfb32945b37",
+      "url": "https://github.com/Chris0Jeky/lumenfold/blob/19d86763944e842cbce6a3b6ae13f7abc1464b37/packs/pack.schema.json",
+      "bytes": 21933,
+      "sha256": "9892f716abfff35a85088c5b5c798a8ae38ddbff50f1e67845f799c7af16a28a"
+    },
+    {
+      "repository": "Chris0Jeky/lumenfold",
+      "revision": "19d86763944e842cbce6a3b6ae13f7abc1464b37",
+      "path": "pipelines/characters/validate_pack.py",
+      "git_blob_sha": "7b323f47b5e81d20f85d7e8c6cc2611e2e5449c9",
+      "url": "https://github.com/Chris0Jeky/lumenfold/blob/19d86763944e842cbce6a3b6ae13f7abc1464b37/pipelines/characters/validate_pack.py",
+      "bytes": 9472,
+      "sha256": "268588d7d01d09f9c597dce7c7dfafe050066586702676cfe633bad941af4de7"
+    },
+    {
+      "repository": "Chris0Jeky/lumenfold",
+      "revision": "19d86763944e842cbce6a3b6ae13f7abc1464b37",
+      "path": "pipelines/characters/intake_model.py",
+      "git_blob_sha": "54cc385c128296ad4b991e908457ca44544ae3fd",
+      "url": "https://github.com/Chris0Jeky/lumenfold/blob/19d86763944e842cbce6a3b6ae13f7abc1464b37/pipelines/characters/intake_model.py",
+      "bytes": 16165,
+      "sha256": "700c55ca6f0f368f87f3c05620385e2bf4b8f58849022f96b95257ceb31f388e"
+    },
+    {
+      "repository": "Chris0Jeky/lumenfold",
+      "revision": "19d86763944e842cbce6a3b6ae13f7abc1464b37",
+      "path": "pipelines/characters/add_file.py",
+      "git_blob_sha": "850c623c7878d7852f82880a33fffc6a9c88ccd6",
+      "url": "https://github.com/Chris0Jeky/lumenfold/blob/19d86763944e842cbce6a3b6ae13f7abc1464b37/pipelines/characters/add_file.py",
+      "bytes": 2428,
+      "sha256": "a62d01fef79f2df1481d4e33df50198d2bd281438f044fd5c45e8ead8b8650d4"
+    },
+    {
+      "repository": "Chris0Jeky/lumenfold",
+      "revision": "19d86763944e842cbce6a3b6ae13f7abc1464b37",
+      "path": "pipelines/characters/intake_sheet3d.py",
+      "git_blob_sha": "2b95b53976be5a11ace6f79528802f6671a8358a",
+      "url": "https://github.com/Chris0Jeky/lumenfold/blob/19d86763944e842cbce6a3b6ae13f7abc1464b37/pipelines/characters/intake_sheet3d.py",
+      "bytes": 8251,
+      "sha256": "8121ba32b27fd69aa12cbb35b54738b2593c20964c264d68b2ba3530b5b9e73c"
+    },
+    {
+      "repository": "Chris0Jeky/lumenfold",
+      "revision": "19d86763944e842cbce6a3b6ae13f7abc1464b37",
+      "path": "docs/programmes/pro/lanes/P36.md",
+      "git_blob_sha": "bc53e47acced5d4100a6a930d90415b3d137c1de",
+      "url": "https://github.com/Chris0Jeky/lumenfold/blob/19d86763944e842cbce6a3b6ae13f7abc1464b37/docs/programmes/pro/lanes/P36.md",
+      "bytes": 2038,
+      "sha256": "ec5007f694aba58a86aa8f78b15d26a8a0fb288d6bbfeb50b8b8ecc6b75f1753"
+    },
+    {
+      "repository": "Chris0Jeky/lumenfold",
+      "revision": "19d86763944e842cbce6a3b6ae13f7abc1464b37",
+      "path": "games/world3d/tools/import_packs.py",
+      "git_blob_sha": "8fccf011d915e41733edacef1dec023946c99a38",
+      "url": "https://github.com/Chris0Jeky/lumenfold/blob/19d86763944e842cbce6a3b6ae13f7abc1464b37/games/world3d/tools/import_packs.py",
+      "bytes": 22511,
+      "sha256": "381f704c73445ba7733cee46619814fcfbe117d1b5eae29c2fe52067b27fb44a"
+    },
+    {
+      "repository": "Chris0Jeky/lumenfold",
+      "revision": "19d86763944e842cbce6a3b6ae13f7abc1464b37",
+      "path": "packs/sable/pack.json",
+      "git_blob_sha": "c0f978b7e66a1d9a70a37be10c8ffaef4c53fcb9",
+      "url": "https://github.com/Chris0Jeky/lumenfold/blob/19d86763944e842cbce6a3b6ae13f7abc1464b37/packs/sable/pack.json",
+      "bytes": 31088,
+      "sha256": "2af53a17a7025b97d6ae17d691b87cec46e3d7d6868a0cb2b2230b1b106fd1ea"
+    },
+    {
+      "repository": "Chris0Jeky/lumenfold",
+      "revision": "19d86763944e842cbce6a3b6ae13f7abc1464b37",
+      "path": "packs/kiri/pack.json",
+      "git_blob_sha": "f65deb03a123c95b7832cbea265abcbacffc8ac4",
+      "url": "https://github.com/Chris0Jeky/lumenfold/blob/19d86763944e842cbce6a3b6ae13f7abc1464b37/packs/kiri/pack.json",
+      "bytes": 28509,
+      "sha256": "0a2785fe47846fe8fc4c461fa4321a01f136b8e3ce4da296535b03c59d3e241b"
+    },
+    {
+      "repository": "Chris0Jeky/lumenfold",
+      "revision": "19d86763944e842cbce6a3b6ae13f7abc1464b37",
+      "path": "docs/decisions/0002-character-pack-v1.md",
+      "git_blob_sha": "5d395ef8a52f3207cbf8a43b886042317287ed72",
+      "url": "https://github.com/Chris0Jeky/lumenfold/blob/19d86763944e842cbce6a3b6ae13f7abc1464b37/docs/decisions/0002-character-pack-v1.md",
+      "bytes": 4543,
+      "sha256": "d795165dca01b11c317b3c0b0892e6b4c5cb9358eb8486e5d4bb1bf3c1d9b56e"
+    },
+    {
+      "repository": "Chris0Jeky/local-asset-studio",
+      "revision": "80b274e8dde6b0333c4d39a9473f6e15e41f38e1",
+      "path": "prototypes/pro/P36/P36-B-20261125-1/pack_export.py",
+      "git_blob_sha": "0e06afe2bf1fd55f4a8149f3bc5f5c8c4737faae",
+      "url": "https://github.com/Chris0Jeky/local-asset-studio/blob/80b274e8dde6b0333c4d39a9473f6e15e41f38e1/prototypes/pro/P36/P36-B-20261125-1/pack_export.py",
+      "bytes": 16000,
+      "sha256": "89ca912e02b2b236d6970d76c2831fe1f2c7e6d64c4e90fa4d2887b571944f79"
+    },
+    {
+      "repository": "Chris0Jeky/local-asset-studio",
+      "revision": "80b274e8dde6b0333c4d39a9473f6e15e41f38e1",
+      "path": "prototypes/pro/P36/P36-B-20261125-1/DESIGN.md",
+      "git_blob_sha": "473310239543bb540de59b5baea707b9ad4aed88",
+      "url": "https://github.com/Chris0Jeky/local-asset-studio/blob/80b274e8dde6b0333c4d39a9473f6e15e41f38e1/prototypes/pro/P36/P36-B-20261125-1/DESIGN.md",
+      "bytes": 9671,
+      "sha256": "0ddfebac603bea0450dcad1004146de78f83764233f2da95bdb8b3c23e350203"
+    }
+  ],
+  "prior_pr": {
+    "url": "https://github.com/Chris0Jeky/local-asset-studio/pull/2046",
+    "head": "80b274e8dde6b0333c4d39a9473f6e15e41f38e1",
+    "state": "open",
+    "merged": false
+  },
+  "import_issue": {
+    "url": "https://github.com/Chris0Jeky/lumenfold/issues/3175",
+    "state": "open",
+    "comments": 0,
+    "updated_at": "2026-11-25T02:32:12Z"
+  }
+}

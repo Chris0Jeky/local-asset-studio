@@ -1,0 +1,72 @@
+{
+  "base": "0270760a3d4fd9e005a1788bba59d8242b77c2f4",
+  "commit": "80b274e8dde6b0333c4d39a9473f6e15e41f38e1",
+  "files": [
+    {
+      "path": "pipeline.py",
+      "sha256": "2a709be22f4414ddc243fb4f94a304d5c5a714898c42cdf57447227c1301a5ef",
+      "source_git_blob": "4189232ca0f6cf79b22e6df187e60de68b60ae6d",
+      "source_path": "prototypes/pro/P36/P36-B-20261125-1/pipeline.py"
+    },
+    {
+      "path": "consistency.py",
+      "sha256": "2797930aa75448f2c2f6cbf52067d2d1802f9850a6c4fb7a8b78dfec37f2695d",
+      "source_git_blob": "e5790ee65c8d1b3fd1a696984b7f5d4698538db2",
+      "source_path": "prototypes/pro/P36/P36-B-20261125-1/consistency.py"
+    },
+    {
+      "path": "pack_export.py",
+      "sha256": "89ca912e02b2b236d6970d76c2831fe1f2c7e6d64c4e90fa4d2887b571944f79",
+      "source_git_blob": "0e06afe2bf1fd55f4a8149f3bc5f5c8c4737faae",
+      "source_path": "prototypes/pro/P36/P36-B-20261125-1/pack_export.py"
+    },
+    {
+      "path": "fixtures.py",
+      "sha256": "69189fd7d9338b531554251611ed8a63b048073d4a084ce39f268ecb37203e43",
+      "source_git_blob": "9a8d32ae3b14eccf4458f23673fb0bd6781c0877",
+      "source_path": "prototypes/pro/P36/P36-B-20261125-1/fixtures.py"
+    },
+    {
+      "path": "fixture_helpers.py",
+      "sha256": "426dabbaea909f038eb2b49905242d1caea1cf03917405dc245d84bc605eb011",
+      "source_git_blob": "e432ffe02085d1a2bcfe7e18967617286c6f2d04",
+      "source_path": "prototypes/pro/P36/P36-B-20261125-1/fixture_helpers.py"
+    },
+    {
+      "path": "lumenfold.pack.schema.json",
+      "sha256": "9892f716abfff35a85088c5b5c798a8ae38ddbff50f1e67845f799c7af16a28a",
+      "source_git_blob": "fd00e2fb6de69b80b3b0756ab89fcbfb32945b37",
+      "source_path": "prototypes/pro/P36/P36-B-20261125-1/lumenfold.pack.schema.json"
+    },
+    {
+      "path": "test_pipeline.py",
+      "sha256": "3abdc2e068b558cf66c91b1fc584cd7ce996fe1bb9ea5a97f3a0adccc2da1486",
+      "source_git_blob": "1c90feec1950d41c0f3d347506986790ba4d358f",
+      "source_path": "prototypes/pro/P36/P36-B-20261125-1/test_pipeline.py"
+    },
+    {
+      "path": "test_consistency.py",
+      "sha256": "da270b20d866b1643710c62af30c2a8240a358ee5b0ebab1ce13eccf3fa91eb7",
+      "source_git_blob": "57f2033ad41a707a5ed00e0c7143acf660e3ec22",
+      "source_path": "prototypes/pro/P36/P36-B-20261125-1/test_consistency.py"
+    },
+    {
+      "path": "test_export.py",
+      "sha256": "5f0b8f487ce670c27a731003b125c749a01142829ca0bd446fb995db61958b7f",
+      "source_git_blob": "618de79684c0bf545645e564318c9dfc96e0d08e",
+      "source_path": "prototypes/pro/P36/P36-B-20261125-1/test_export.py"
+    },
+    {
+      "path": "test_review_regressions.py",
+      "sha256": "efa8a9c7eee2a00a3719558579b8665bc8f4de601b6cb4d691bea62a37c46c71",
+      "source_git_blob": "0ab87fd59561f3fc0c403f54b4e14577463b6917",
+      "source_path": "prototypes/pro/P36/P36-B-20261125-1/test_review_regressions.py"
+    }
+  ],
+  "licence": "Repository-owned source; no top-level licence grant found. Retained in the same repository, not relicensed. Lumenfold schema belongs to the same owner.",
+  "pull_request": 2046,
+  "reason": "Reuse prior owned-source family/scorer/export kernel and regression tests on the required fixed base; no parallel reimplementation. New behavior is in guard/admission modules. Original files are byte-identical.",
+  "repository": "Chris0Jeky/local-asset-studio",
+  "schema": "las.p36-upstream/1",
+  "state_at_read": "open-unmerged"
+}
