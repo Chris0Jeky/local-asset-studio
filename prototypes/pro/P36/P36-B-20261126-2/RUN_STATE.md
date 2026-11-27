@@ -4,7 +4,7 @@ lane: P36
 part: B
 base: 0270760a
 phase: building
-updated: 2026-11-27T00:38Z
+updated: 2026-11-27T00:42Z
 tests: py -3 prototypes/pro/P36/P36-B-20261126-2/prove.py --tests-only --output .runtime/pro/P36-B-20261126-2/owner-tests-1
 evidence: py -3 prototypes/pro/P36/P36-B-20261126-2/prove.py --output .runtime/pro/P36-B-20261126-2/owner-proof-1 --check-evidence prototypes/pro/P36/P36-B-20261126-2/EVIDENCE.json --check-hashes prototypes/pro/P36/P36-B-20261126-2/OUTPUT_HASHES.sha256
 hashes: prototypes/pro/P36/P36-B-20261126-2/OUTPUT_HASHES.sha256
@@ -17,17 +17,17 @@ hashes: prototypes/pro/P36/P36-B-20261126-2/OUTPUT_HASHES.sha256
 - [x] 5. Complete proving checks, hashes, branch inventory, and ready-for-review handoff. (commit 7d2848c)
 
 - [x] 6. Correct actual Studio indexing provenance and prove it through the real indexer. (commit 87783e2)
-- [ ] 7. Implement durable dispatch coordination with crash/restart/concurrency evidence.
-- [ ] 8. Implement independent consumer integrity and current-authority verification. Complete: 32 focused tests pass; record this checkpoint SHA next.
+- [ ] 7. Implement durable dispatch coordination with crash/restart/concurrency evidence. Complete: 53 focused tests and 23 measured dispatch cases pass; record this checkpoint SHA next.
+- [x] 8. Implement independent consumer integrity and current-authority verification. (commit 9ad9db5)
 - [ ] 9. Publish expanded evidence, adoption and reviewed continuation closeout.
 
 ## Next
-Record this checkpoint SHA for item 8: independent handoff verifier, its 32 passing tests and API are now published, alongside the read-only Production intent factory and its 24 passing tests. Complete root's dispatch coordinator and publication/reconciliation tests. The latest changes freeze caller JSON, recheck authority after marker publication, require the acknowledged prompt, and pin exact observed job/workflow bytes while settling the ledger and journal in one transaction. Independent review reproduced three pre-fix defects and its six regressions pass. Run dispatch-reviewed.log, then publish coordinator sources/tests in a <=10-file checkpoint. Integrate deterministic consumer_evidence.py and production_evidence.py from specialist work, add dispatch evidence to prove.py, preserve historical evidence, and finish aggregate checks/adoption. All callbacks are offline simulations, no generation/native import.
+Record this checkpoint SHA for item 7. Durable dispatch and atomic exact-observation reconciliation now have 53 passing focused tests, including six independent review regressions. dispatch_evidence.py observed exactly 10 expected simulated callbacks across 23 cases, zero duplicates, four independent-process crash boundaries and a three-process claim race. No actual generation/native work occurred. Integrate/publish the deterministic indexing, production and consumer evidence modules, then run the expanded prove.py twice in fresh runtime directories and compare all eleven deterministic outputs. The full repository suite is running to .runtime/pro/P36-B-20261126-2/full-suite-continuation.log. Preserve historical BASELINE_EVIDENCE.json and BASELINE_OUTPUT_HASHES.sha256. Finish README, ADOPTION, DISPATCH_API, VERIFICATION and the continuation report; update Lumenfold issue #3175 and copy the report to the existing Drive run folder. Check branch inventory, done state and ready PR only after checks finish.
 
 ## Not pushed yet
-- prototypes/pro/P36/P36-B-20261126-2/attempt_ledger.py
-- prototypes/pro/P36/P36-B-20261126-2/dispatch_coordinator.py
-- prototypes/pro/P36/P36-B-20261126-2/dispatch_simulation.py
-- prototypes/pro/P36/P36-B-20261126-2/dispatch_fixtures.py
-- prototypes/pro/P36/P36-B-20261126-2/test_dispatch_coordinator.py
-- prototypes/pro/P36/P36-B-20261126-2/test_dispatch_review.py
+- prototypes/pro/P36/P36-B-20261126-2/prove.py
+- prototypes/pro/P36/P36-B-20261126-2/indexing_evidence.py
+- prototypes/pro/P36/P36-B-20261126-2/production_evidence.py
+- prototypes/pro/P36/P36-B-20261126-2/consumer_evidence.py
+- prototypes/pro/P36/P36-B-20261126-2/BASELINE_EVIDENCE.json
+- prototypes/pro/P36/P36-B-20261126-2/BASELINE_OUTPUT_HASHES.sha256

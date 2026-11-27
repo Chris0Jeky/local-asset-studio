@@ -199,21 +199,32 @@ def _observation(experiments, row):
     return state, p.digest(observation)
 
 
-def resolve(path, attempt_id, *, experiments):
+def _resolve_in_connection(db, attempt_id, *, experiments, expected_observation_sha256=None):
+    """Resolve inside the caller's write transaction, optionally pinning observed bytes."""
     p.require(type(attempt_id) is str and p.HEX64.fullmatch(attempt_id), 'Exact retained attempt ID required')
-    with _connection(path, writable=True) as db:
-        row = db.execute('SELECT * FROM attempts WHERE attempt_id=?', (attempt_id,)).fetchone()
-        p.require(row is not None, 'Attempt is not retained')
-        row = _validate_row(row)
-        state, observation = _observation(experiments, row)
-        if row['state'] != 'unresolved':
-            p.require(row['state'] == state and row['observation_sha256'] == observation,
-                      'Resolved evidence changed; inspect it before further work')
-            return _view(row)
-        db.execute('UPDATE attempts SET state=?,observation_sha256=?,revision=revision+1 WHERE attempt_id=?',
-                   (state, observation, attempt_id))
-        row = db.execute('SELECT * FROM attempts WHERE attempt_id=?', (attempt_id,)).fetchone()
+    if expected_observation_sha256 is not None:
+        p.require(type(expected_observation_sha256) is str and p.HEX64.fullmatch(expected_observation_sha256),
+                  'Exact expected observation hash required')
+    row = db.execute('SELECT * FROM attempts WHERE attempt_id=?', (attempt_id,)).fetchone()
+    p.require(row is not None, 'Attempt is not retained')
+    row = _validate_row(row)
+    state, observation = _observation(experiments, row)
+    p.require(expected_observation_sha256 is None or observation == expected_observation_sha256,
+              'Observed bytes changed after operation-specific validation', 'observation_changed')
+    if row['state'] != 'unresolved':
+        p.require(row['state'] == state and row['observation_sha256'] == observation,
+                  'Resolved evidence changed; inspect it before further work')
+        return _view(row)
+    db.execute('UPDATE attempts SET state=?,observation_sha256=?,revision=revision+1 WHERE attempt_id=?',
+               (state, observation, attempt_id))
+    row = db.execute('SELECT * FROM attempts WHERE attempt_id=?', (attempt_id,)).fetchone()
     return _view(row)
+
+
+def resolve(path, attempt_id, *, experiments, expected_observation_sha256=None):
+    with _connection(path, writable=True) as db:
+        return _resolve_in_connection(db, attempt_id, experiments=experiments,
+                                      expected_observation_sha256=expected_observation_sha256)
 
 
 def inspect(path, *, family_id, stages, experiments):
