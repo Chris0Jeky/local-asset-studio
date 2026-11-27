@@ -3,8 +3,8 @@ run: P36-B-20261126-2
 lane: P36
 part: B
 base: 0270760a
-phase: done
-updated: 2026-11-26T23:51Z
+phase: planning
+updated: 2026-11-27T00:17Z
 tests: py -3 prototypes/pro/P36/P36-B-20261126-2/prove.py --tests-only --output .runtime/pro/P36-B-20261126-2/owner-tests-1
 evidence: py -3 prototypes/pro/P36/P36-B-20261126-2/prove.py --output .runtime/pro/P36-B-20261126-2/owner-proof-1 --check-evidence prototypes/pro/P36/P36-B-20261126-2/EVIDENCE.json --check-hashes prototypes/pro/P36/P36-B-20261126-2/OUTPUT_HASHES.sha256
 hashes: prototypes/pro/P36/P36-B-20261126-2/OUTPUT_HASHES.sha256
@@ -16,8 +16,13 @@ hashes: prototypes/pro/P36/P36-B-20261126-2/OUTPUT_HASHES.sha256
 - [x] 4. Publish first-character route plan, cross-repo adoption, and import-side issue update. (commit a5e2e9f)
 - [x] 5. Complete proving checks, hashes, branch inventory, and ready-for-review handoff. (commit 7d2848c)
 
+- [ ] 6. Correct actual Studio indexing provenance and prove it through the real indexer.
+- [ ] 7. Implement durable dispatch coordination with crash/restart/concurrency evidence.
+- [ ] 8. Implement independent consumer integrity and current-authority verification.
+- [ ] 9. Publish expanded evidence, adoption and reviewed continuation closeout.
+
 ## Next
-The owner or Studio agents should run the evidence command above from this branch in the existing Studio environment, using a new .runtime output path, and compare EVIDENCE.json plus all seven OUTPUT_HASHES.sha256 entries; optional --lumenfold-root accepts only the inspected validator/schema bytes. Then follow ADOPTION.md to move the exact accepted Sable A2 source/acceptance mapping from 0 to 1 without authorizing new generation. Studio agents own the planned worker admission/ledger seam; lf-characters-3d and lf-anime-look own the planned native staged import and appearance gates in Lumenfold issue #3175, with the published addendum at issuecomment-7205798489. VERIFICATION.md records 202 tests with no skips using the pinned consumer, a standalone repeat with only two optional skips and identical seven hashes, the 7,321-test repository suite with 62 skips, final repository validation, source/branch checks and all runtime limits. This run's software is implemented; real-character/native outputs remain planned, direct current-importer consumption is disallowed, and generation budget remains zero.
+Continue from completed head 835e93c on the same branch and PR #2049, now returned to draft. Read CONTINUATION_PLAN.md. Reproduce and fix the new GitHub review finding discussion_r4714353061 using actual Studio.index_outputs, then integrate the durable dispatch coordinator and independent handoff verifier from isolated specialist work. Root owns the Studio checkout and all GitHub writes; no actual generation/native work is authorized by this software continuation. Preserve prior 202-test evidence as historical until the expanded proof is recorded. Checkpoint each completed item and at least every 20 minutes, at most ten files per commit.
 
 ## Not pushed yet
 - (none)
