@@ -1,0 +1,770 @@
+{
+  "schema": "studio.reference-qualification/v1",
+  "id": "p35-b-20261125-1",
+  "evidence_mode": "planned",
+  "canon": [
+    {
+      "id": "canon-a",
+      "label": "Owner-supplied character A",
+      "reference_sha256": null
+    },
+    {
+      "id": "canon-b",
+      "label": "Owner-supplied character B",
+      "reference_sha256": null
+    },
+    {
+      "id": "canon-c",
+      "label": "Owner-supplied character C",
+      "reference_sha256": null
+    }
+  ],
+  "routes": [
+    "klein4-reference",
+    "klein9-copy-pose",
+    "klein9-skeleton",
+    "qwen-3ref"
+  ],
+  "route_pins": {
+    "klein4-reference": null,
+    "klein9-copy-pose": null,
+    "klein9-skeleton": null,
+    "qwen-3ref": null
+  },
+  "seeds": [
+    2026112501,
+    2026112502,
+    2026112503
+  ],
+  "minimum_score": 3,
+  "cases": [
+    {
+      "id": "ordinary-neutral",
+      "family": "ordinary",
+      "title": "Neutral standing portrait",
+      "brief": "A relaxed full-body stance with both feet supported, a readable face, and complete outfit.",
+      "subject_ids": [
+        "canon-a"
+      ],
+      "references": [
+        {
+          "id": "ordinary-neutral-canon-a",
+          "subject_id": "canon-a",
+          "roles": [
+            "identity",
+            "outfit"
+          ],
+          "sha256": null,
+          "source_group": "canon-a",
+          "claims": {}
+        },
+        {
+          "id": "ordinary-neutral-pose",
+          "subject_id": "canon-a",
+          "roles": [
+            "pose",
+            "composition"
+          ],
+          "sha256": null,
+          "source_group": "pose-ordinary-neutral",
+          "claims": {}
+        }
+      ]
+    },
+    {
+      "id": "ordinary-reach",
+      "family": "ordinary",
+      "title": "Simple side reach",
+      "brief": "Character B reaches sideways while preserving face, costume and clear limb separation.",
+      "subject_ids": [
+        "canon-b"
+      ],
+      "references": [
+        {
+          "id": "ordinary-reach-canon-b",
+          "subject_id": "canon-b",
+          "roles": [
+            "identity",
+            "outfit"
+          ],
+          "sha256": null,
+          "source_group": "canon-b",
+          "claims": {}
+        },
+        {
+          "id": "ordinary-reach-pose",
+          "subject_id": "canon-b",
+          "roles": [
+            "pose",
+            "composition"
+          ],
+          "sha256": null,
+          "source_group": "pose-ordinary-reach",
+          "claims": {}
+        },
+        {
+          "id": "ordinary-reach-style",
+          "subject_id": null,
+          "roles": [
+            "style"
+          ],
+          "sha256": null,
+          "source_group": "style-1",
+          "claims": {}
+        }
+      ]
+    },
+    {
+      "id": "unusual-twist",
+      "family": "unusual",
+      "title": "Deep torso twist",
+      "brief": "Character C twists through the waist with a visible pelvis and correctly connected shoulders.",
+      "subject_ids": [
+        "canon-c"
+      ],
+      "references": [
+        {
+          "id": "unusual-twist-canon-c",
+          "subject_id": "canon-c",
+          "roles": [
+            "identity",
+            "outfit"
+          ],
+          "sha256": null,
+          "source_group": "canon-c",
+          "claims": {}
+        },
+        {
+          "id": "unusual-twist-pose",
+          "subject_id": "canon-c",
+          "roles": [
+            "pose",
+            "composition"
+          ],
+          "sha256": null,
+          "source_group": "pose-unusual-twist",
+          "claims": {}
+        }
+      ]
+    },
+    {
+      "id": "unusual-crouch",
+      "family": "unusual",
+      "title": "Asymmetric crouch",
+      "brief": "Character A crouches asymmetrically with one raised elbow and one supported knee.",
+      "subject_ids": [
+        "canon-a"
+      ],
+      "references": [
+        {
+          "id": "unusual-crouch-canon-a",
+          "subject_id": "canon-a",
+          "roles": [
+            "identity",
+            "outfit"
+          ],
+          "sha256": null,
+          "source_group": "canon-a",
+          "claims": {}
+        },
+        {
+          "id": "unusual-crouch-pose",
+          "subject_id": "canon-a",
+          "roles": [
+            "pose",
+            "composition"
+          ],
+          "sha256": null,
+          "source_group": "pose-unusual-crouch",
+          "claims": {}
+        }
+      ]
+    },
+    {
+      "id": "foreshortened-arm",
+      "family": "foreshortened",
+      "title": "Arm toward camera",
+      "brief": "Character B extends one hand toward camera with deliberate perspective and correct finger count.",
+      "subject_ids": [
+        "canon-b"
+      ],
+      "references": [
+        {
+          "id": "foreshortened-arm-canon-b",
+          "subject_id": "canon-b",
+          "roles": [
+            "identity",
+            "outfit"
+          ],
+          "sha256": null,
+          "source_group": "canon-b",
+          "claims": {}
+        },
+        {
+          "id": "foreshortened-arm-pose",
+          "subject_id": "canon-b",
+          "roles": [
+            "pose",
+            "composition"
+          ],
+          "sha256": null,
+          "source_group": "pose-foreshortened-arm",
+          "claims": {}
+        }
+      ]
+    },
+    {
+      "id": "foreshortened-overhead",
+      "family": "foreshortened",
+      "title": "Steep overhead view",
+      "brief": "Character C appears from steep overhead with shortened torso depth and preserved identity.",
+      "subject_ids": [
+        "canon-c"
+      ],
+      "references": [
+        {
+          "id": "foreshortened-overhead-canon-c",
+          "subject_id": "canon-c",
+          "roles": [
+            "identity",
+            "outfit"
+          ],
+          "sha256": null,
+          "source_group": "canon-c",
+          "claims": {}
+        },
+        {
+          "id": "foreshortened-overhead-pose",
+          "subject_id": "canon-c",
+          "roles": [
+            "pose",
+            "composition"
+          ],
+          "sha256": null,
+          "source_group": "pose-foreshortened-overhead",
+          "claims": {}
+        },
+        {
+          "id": "foreshortened-overhead-style",
+          "subject_id": null,
+          "roles": [
+            "style"
+          ],
+          "sha256": null,
+          "source_group": "style-5",
+          "claims": {}
+        }
+      ]
+    },
+    {
+      "id": "occluded-crossed",
+      "family": "occluded",
+      "title": "Crossed limbs",
+      "brief": "Character A crosses arms and legs; visible segments connect plausibly behind the occlusions.",
+      "subject_ids": [
+        "canon-a"
+      ],
+      "references": [
+        {
+          "id": "occluded-crossed-canon-a",
+          "subject_id": "canon-a",
+          "roles": [
+            "identity",
+            "outfit"
+          ],
+          "sha256": null,
+          "source_group": "canon-a",
+          "claims": {}
+        },
+        {
+          "id": "occluded-crossed-pose",
+          "subject_id": "canon-a",
+          "roles": [
+            "pose",
+            "composition"
+          ],
+          "sha256": null,
+          "source_group": "pose-occluded-crossed",
+          "claims": {}
+        }
+      ]
+    },
+    {
+      "id": "occluded-prop",
+      "family": "occluded",
+      "title": "Partly hidden by a prop",
+      "brief": "Character B stands behind a large foreground prop without duplicate limbs or missing costume continuity.",
+      "subject_ids": [
+        "canon-b"
+      ],
+      "references": [
+        {
+          "id": "occluded-prop-canon-b",
+          "subject_id": "canon-b",
+          "roles": [
+            "identity",
+            "outfit"
+          ],
+          "sha256": null,
+          "source_group": "canon-b",
+          "claims": {}
+        },
+        {
+          "id": "occluded-prop-pose",
+          "subject_id": "canon-b",
+          "roles": [
+            "pose",
+            "composition",
+            "scene"
+          ],
+          "sha256": null,
+          "source_group": "pose-occluded-prop",
+          "claims": {}
+        }
+      ]
+    },
+    {
+      "id": "contact-heavy-grip",
+      "family": "contact-heavy",
+      "title": "Both hands grip a prop",
+      "brief": "Character C holds a lantern with both hands; fingers wrap the handle and the prop has support.",
+      "subject_ids": [
+        "canon-c"
+      ],
+      "references": [
+        {
+          "id": "contact-heavy-grip-canon-c",
+          "subject_id": "canon-c",
+          "roles": [
+            "identity",
+            "outfit",
+            "detail"
+          ],
+          "sha256": null,
+          "source_group": "canon-c",
+          "claims": {}
+        },
+        {
+          "id": "contact-heavy-grip-pose",
+          "subject_id": "canon-c",
+          "roles": [
+            "pose",
+            "composition"
+          ],
+          "sha256": null,
+          "source_group": "pose-contact-heavy-grip",
+          "claims": {}
+        }
+      ]
+    },
+    {
+      "id": "contact-heavy-brace",
+      "family": "contact-heavy",
+      "title": "Brace against furniture",
+      "brief": "Character A braces palm and forearm against a table while keeping fingers, elbow and table contact plausible.",
+      "subject_ids": [
+        "canon-a"
+      ],
+      "references": [
+        {
+          "id": "contact-heavy-brace-canon-a",
+          "subject_id": "canon-a",
+          "roles": [
+            "identity",
+            "outfit",
+            "detail"
+          ],
+          "sha256": null,
+          "source_group": "canon-a",
+          "claims": {}
+        },
+        {
+          "id": "contact-heavy-brace-pose",
+          "subject_id": "canon-a",
+          "roles": [
+            "pose",
+            "composition"
+          ],
+          "sha256": null,
+          "source_group": "pose-contact-heavy-brace",
+          "claims": {}
+        }
+      ]
+    },
+    {
+      "id": "floor-kneel",
+      "family": "floor",
+      "title": "Kneeling on the floor",
+      "brief": "Character B kneels on the floor with coherent hip, knee and ankle support.",
+      "subject_ids": [
+        "canon-b"
+      ],
+      "references": [
+        {
+          "id": "floor-kneel-canon-b",
+          "subject_id": "canon-b",
+          "roles": [
+            "identity",
+            "outfit"
+          ],
+          "sha256": null,
+          "source_group": "canon-b",
+          "claims": {}
+        },
+        {
+          "id": "floor-kneel-pose",
+          "subject_id": "canon-b",
+          "roles": [
+            "pose",
+            "composition"
+          ],
+          "sha256": null,
+          "source_group": "pose-floor-kneel",
+          "claims": {}
+        }
+      ]
+    },
+    {
+      "id": "floor-crawl",
+      "family": "floor",
+      "title": "Low four-point support",
+      "brief": "Character C uses hands and knees for support with coherent contacts and no floating body.",
+      "subject_ids": [
+        "canon-c"
+      ],
+      "references": [
+        {
+          "id": "floor-crawl-canon-c",
+          "subject_id": "canon-c",
+          "roles": [
+            "identity",
+            "outfit"
+          ],
+          "sha256": null,
+          "source_group": "canon-c",
+          "claims": {}
+        },
+        {
+          "id": "floor-crawl-pose",
+          "subject_id": "canon-c",
+          "roles": [
+            "pose",
+            "composition"
+          ],
+          "sha256": null,
+          "source_group": "pose-floor-crawl",
+          "claims": {}
+        }
+      ]
+    },
+    {
+      "id": "seated-chair",
+      "family": "seated",
+      "title": "Seated upright",
+      "brief": "Character A sits on a chair with weight on the seat, grounded feet and correct clothing folds.",
+      "subject_ids": [
+        "canon-a"
+      ],
+      "references": [
+        {
+          "id": "seated-chair-canon-a",
+          "subject_id": "canon-a",
+          "roles": [
+            "identity",
+            "outfit"
+          ],
+          "sha256": null,
+          "source_group": "canon-a",
+          "claims": {}
+        },
+        {
+          "id": "seated-chair-pose",
+          "subject_id": "canon-a",
+          "roles": [
+            "pose",
+            "composition"
+          ],
+          "sha256": null,
+          "source_group": "pose-seated-chair",
+          "claims": {}
+        }
+      ]
+    },
+    {
+      "id": "seated-crossed",
+      "family": "seated",
+      "title": "Seated with crossed legs",
+      "brief": "Character B sits with crossed legs while preserving both knees, pelvis orientation and seat support.",
+      "subject_ids": [
+        "canon-b"
+      ],
+      "references": [
+        {
+          "id": "seated-crossed-canon-b",
+          "subject_id": "canon-b",
+          "roles": [
+            "identity",
+            "outfit"
+          ],
+          "sha256": null,
+          "source_group": "canon-b",
+          "claims": {}
+        },
+        {
+          "id": "seated-crossed-pose",
+          "subject_id": "canon-b",
+          "roles": [
+            "pose",
+            "composition"
+          ],
+          "sha256": null,
+          "source_group": "pose-seated-crossed",
+          "claims": {}
+        },
+        {
+          "id": "seated-crossed-style",
+          "subject_id": null,
+          "roles": [
+            "style"
+          ],
+          "sha256": null,
+          "source_group": "style-13",
+          "claims": {}
+        }
+      ]
+    },
+    {
+      "id": "lying-side",
+      "family": "lying",
+      "title": "Lying on one side",
+      "brief": "Character C lies on one side with head, shoulder and hip in a plausible support chain.",
+      "subject_ids": [
+        "canon-c"
+      ],
+      "references": [
+        {
+          "id": "lying-side-canon-c",
+          "subject_id": "canon-c",
+          "roles": [
+            "identity",
+            "outfit"
+          ],
+          "sha256": null,
+          "source_group": "canon-c",
+          "claims": {}
+        },
+        {
+          "id": "lying-side-pose",
+          "subject_id": "canon-c",
+          "roles": [
+            "pose",
+            "composition",
+            "scene"
+          ],
+          "sha256": null,
+          "source_group": "pose-lying-side",
+          "claims": {}
+        }
+      ]
+    },
+    {
+      "id": "lying-back",
+      "family": "lying",
+      "title": "Lying on the back",
+      "brief": "Character A lies on the back with foreshortened legs, supported shoulders and stable costume details.",
+      "subject_ids": [
+        "canon-a"
+      ],
+      "references": [
+        {
+          "id": "lying-back-canon-a",
+          "subject_id": "canon-a",
+          "roles": [
+            "identity",
+            "outfit"
+          ],
+          "sha256": null,
+          "source_group": "canon-a",
+          "claims": {}
+        },
+        {
+          "id": "lying-back-pose",
+          "subject_id": "canon-a",
+          "roles": [
+            "pose",
+            "composition"
+          ],
+          "sha256": null,
+          "source_group": "pose-lying-back",
+          "claims": {}
+        }
+      ]
+    },
+    {
+      "id": "dynamic-action-leap",
+      "family": "dynamic-action",
+      "title": "Leaping turn",
+      "brief": "Character B leaps with a strong action line, clear airborne state and believable joint articulation.",
+      "subject_ids": [
+        "canon-b"
+      ],
+      "references": [
+        {
+          "id": "dynamic-action-leap-canon-b",
+          "subject_id": "canon-b",
+          "roles": [
+            "identity",
+            "outfit"
+          ],
+          "sha256": null,
+          "source_group": "canon-b",
+          "claims": {}
+        },
+        {
+          "id": "dynamic-action-leap-pose",
+          "subject_id": "canon-b",
+          "roles": [
+            "pose",
+            "composition"
+          ],
+          "sha256": null,
+          "source_group": "pose-dynamic-action-leap",
+          "claims": {}
+        },
+        {
+          "id": "dynamic-action-leap-style",
+          "subject_id": null,
+          "roles": [
+            "style"
+          ],
+          "sha256": null,
+          "source_group": "style-16",
+          "claims": {}
+        }
+      ]
+    },
+    {
+      "id": "dynamic-action-lunge",
+      "family": "dynamic-action",
+      "title": "Low action lunge",
+      "brief": "Character C lunges with a planted leading foot, trailing motion and stable face and outfit.",
+      "subject_ids": [
+        "canon-c"
+      ],
+      "references": [
+        {
+          "id": "dynamic-action-lunge-canon-c",
+          "subject_id": "canon-c",
+          "roles": [
+            "identity",
+            "outfit"
+          ],
+          "sha256": null,
+          "source_group": "canon-c",
+          "claims": {}
+        },
+        {
+          "id": "dynamic-action-lunge-pose",
+          "subject_id": "canon-c",
+          "roles": [
+            "pose",
+            "composition"
+          ],
+          "sha256": null,
+          "source_group": "pose-dynamic-action-lunge",
+          "claims": {}
+        }
+      ]
+    },
+    {
+      "id": "multi-character-handoff",
+      "family": "multi-character",
+      "title": "Two-character handoff",
+      "brief": "Characters A and B exchange one prop; preserve both identities, their individual outfits and the shared contact.",
+      "subject_ids": [
+        "canon-a",
+        "canon-b"
+      ],
+      "references": [
+        {
+          "id": "multi-character-handoff-canon-a",
+          "subject_id": "canon-a",
+          "roles": [
+            "identity",
+            "outfit"
+          ],
+          "sha256": null,
+          "source_group": "canon-a",
+          "claims": {}
+        },
+        {
+          "id": "multi-character-handoff-canon-b",
+          "subject_id": "canon-b",
+          "roles": [
+            "identity",
+            "outfit"
+          ],
+          "sha256": null,
+          "source_group": "canon-b",
+          "claims": {}
+        },
+        {
+          "id": "multi-character-handoff-pose",
+          "subject_id": null,
+          "roles": [
+            "pose",
+            "composition"
+          ],
+          "sha256": null,
+          "source_group": "pose-multi-character-handoff",
+          "claims": {}
+        }
+      ]
+    },
+    {
+      "id": "multi-character-support",
+      "family": "multi-character",
+      "title": "Two-character support",
+      "brief": "Characters B and C support one another; preserve subject identity, separate limbs and plausible weight transfer.",
+      "subject_ids": [
+        "canon-b",
+        "canon-c"
+      ],
+      "references": [
+        {
+          "id": "multi-character-support-canon-b",
+          "subject_id": "canon-b",
+          "roles": [
+            "identity",
+            "outfit"
+          ],
+          "sha256": null,
+          "source_group": "canon-b",
+          "claims": {}
+        },
+        {
+          "id": "multi-character-support-canon-c",
+          "subject_id": "canon-c",
+          "roles": [
+            "identity",
+            "outfit"
+          ],
+          "sha256": null,
+          "source_group": "canon-c",
+          "claims": {}
+        },
+        {
+          "id": "multi-character-support-pose",
+          "subject_id": null,
+          "roles": [
+            "pose",
+            "composition"
+          ],
+          "sha256": null,
+          "source_group": "pose-multi-character-support",
+          "claims": {}
+        }
+      ]
+    }
+  ]
+}

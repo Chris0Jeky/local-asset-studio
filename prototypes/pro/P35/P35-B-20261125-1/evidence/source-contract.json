@@ -1,0 +1,105 @@
+{
+  "fixture_mode": "synthetic_non_image_bytes_and_unicode_prompt",
+  "generation_submitted": false,
+  "graph_comparisons": 8,
+  "models_loaded": false,
+  "network_accessed": false,
+  "routes": [
+    {
+      "matches": true,
+      "preset_id": "combine-klein",
+      "route_id": "klein4-reference",
+      "variants": [
+        {
+          "graph_sha256": "799a27907c93db08757a850a7e396c3a12f8df022e75b6a84df4e7127049673d",
+          "prepared_reference_slots": 2,
+          "pruned_reference_slots": [
+            2
+          ],
+          "seed": 2026112501
+        },
+        {
+          "graph_sha256": "d34061f8888c51b4fe302d4e15e88a4dc6b382f76ed395ca4fa424c6c3067153",
+          "prepared_reference_slots": 2,
+          "pruned_reference_slots": [
+            2
+          ],
+          "seed": 2026112502
+        }
+      ]
+    },
+    {
+      "matches": true,
+      "preset_id": "combine-klein-9b-copypose",
+      "route_id": "klein9-copy-pose",
+      "variants": [
+        {
+          "graph_sha256": "3ef193aee9ffab40f32c7db1bc3bc60987a24a9e292e6bc22b3a3f7d0cc8ed08",
+          "prepared_reference_slots": 1,
+          "pruned_reference_slots": [],
+          "seed": 2026112501
+        },
+        {
+          "graph_sha256": "db3423f66066d7e0bcab290967ff117c2e4904a70e3a5d7a6d837874a413f378",
+          "prepared_reference_slots": 1,
+          "pruned_reference_slots": [],
+          "seed": 2026112502
+        }
+      ]
+    },
+    {
+      "matches": true,
+      "preset_id": "combine-klein-9b-skeleton",
+      "route_id": "klein9-skeleton",
+      "variants": [
+        {
+          "graph_sha256": "8285176addae839deb73bbdeefa4a67a40692e0af68926b92f251ae5c00143aa",
+          "prepared_reference_slots": 1,
+          "pruned_reference_slots": [],
+          "seed": 2026112501
+        },
+        {
+          "graph_sha256": "0caadde702eafba8b16d94a508894a7e0d48f012ecc94afc327078af0ff00fb3",
+          "prepared_reference_slots": 1,
+          "pruned_reference_slots": [],
+          "seed": 2026112502
+        }
+      ]
+    },
+    {
+      "matches": true,
+      "preset_id": "qwen-3ref",
+      "route_id": "qwen-3ref",
+      "variants": [
+        {
+          "graph_sha256": "d6aa927cf54bc0d75bc775956bc53c494d686d3ec36455a71732c55e739d33ca",
+          "prepared_reference_slots": 3,
+          "pruned_reference_slots": [],
+          "seed": 2026112501
+        },
+        {
+          "graph_sha256": "5527a62fb76dfdea39fe459572934f7baec8f6811e0920e0f27b234dc5c65a30",
+          "prepared_reference_slots": 3,
+          "pruned_reference_slots": [],
+          "seed": 2026112502
+        }
+      ]
+    }
+  ],
+  "schema": "p35.source-contract-check/v1",
+  "source_files_sha256": {
+    "app/references.py": "fb65b4fd8f0194c64f09871e61c19c4b71d53adc653757d6c2a744041a2ecdea",
+    "app/server.py": "bcf3f1e628e345cf827cbf73a203ee27e4cf0c04f757176c8d954c05a29688aa",
+    "presets/catalog.json": "8a246463e974720a70140d71ceabf8ca66dd962467d302011a2e1eed029ec214"
+  },
+  "source_revision": "0270760a3d4fd9e005a1788bba59d8242b77c2f4",
+  "stubbed_boundaries": [
+    "worker availability and backend admission",
+    "image decoding: synthetic references report 832 by 1248 pixels",
+    "live installed-model inventory: empty observation, no model access",
+    "continuation placeholder and continuation/tile/parallax validators",
+    "Wan capacity, host memory preflight and i2v source validation",
+    "copying uploads into the backend input directory"
+  ],
+  "verification": "Pinned preparation source subset; not live Studio, GPU, image or host qualification"
+}
