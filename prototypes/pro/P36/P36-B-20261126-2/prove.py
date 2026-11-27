@@ -211,13 +211,30 @@ def verify_retained_sources():
     return len(inventory['files'])
 
 
+def prove_continuation(out):
+    from indexing_evidence import prove_indexing
+    from production_evidence import prove_preparation
+    from dispatch_evidence import prove_dispatch
+    from consumer_evidence import prove_consumer
+    suites = [('indexing', prove_indexing), ('preparation', prove_preparation),
+              ('dispatch', prove_dispatch), ('consumer', prove_consumer)]
+    result = {}
+    for name, build in suites:
+        evidence = build(out / (name + '-cases'))
+        write(out / (name + '-evidence.json'), evidence)
+        result[name] = {key: value for key, value in evidence.items() if key not in ('cases', 'controls', 'limitations')}
+        result[name]['deterministic_file'] = name + '-evidence.json'
+        result[name]['canonical_sha256'] = p.digest(evidence)
+    return result
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', required=True, help='Fresh directory under repository .runtime/')
     parser.add_argument('--tests-only', action='store_true')
     parser.add_argument('--lumenfold-root', help='Existing trusted checkout/snapshot; only pinned validator/schema are loaded')
     parser.add_argument('--check-evidence', help='Compare the deterministic evidence with this committed JSON')
-    parser.add_argument('--check-hashes', help='Compare all seven deterministic output hashes with this UTF-8 LF manifest')
+    parser.add_argument('--check-hashes', help='Compare all eleven deterministic output hashes with this UTF-8 LF manifest')
     parser.add_argument('--repetitions', type=int, default=50)
     args = parser.parse_args(argv)
     try:
@@ -241,11 +258,13 @@ def main(argv=None):
         attempts_evidence = prove_attempts(out)
         provenance = prove_provenance()
         staging, staging_observation = prove_staging(out, args.lumenfold_root)
-        evidence = {'schema': 'las.p36-evidence/2', 'run': RUN, 'evidence_state': 'implemented',
+        continuation = prove_continuation(out)
+        evidence = {'schema': 'las.p36-evidence/3', 'run': RUN, 'evidence_state': 'implemented',
                     'scope': 'synthetic offline software proof; no perceptual accuracy or native qualification',
                     'retained_source_files': retained, 'prototype_tests_discovered': tests['tests'],
                     'semantics': semantics, 'current_authority': current, 'attempts': attempts_evidence,
-                    'provenance': provenance, 'staging': staging, 'generation_submissions': 0}
+                    'provenance': provenance, 'staging': staging, 'generation_submissions': 0,
+                    'continuation': continuation}
         write(out / 'evidence.json', evidence)
         write(out / 'staging-observation.json', staging_observation)
         ordered = sorted(nanoseconds)
@@ -255,7 +274,8 @@ def main(argv=None):
               'p95_method': 'nearest-rank-ceiling',
               'min_ms': ordered[0] / 1e6, 'max_ms': ordered[-1] / 1e6})
         deterministic = ['evidence.json', 'family.json', 'workspace-binding.json', 'semantic-policy.json',
-                         'annotations.json', 'metadata.json', 'pack.json']
+                         'annotations.json', 'metadata.json', 'pack.json', 'indexing-evidence.json',
+                         'preparation-evidence.json', 'dispatch-evidence.json', 'consumer-evidence.json']
         hashes = ''.join(hashlib.sha256((out / name).read_bytes()).hexdigest() + '  ' + name + '\n' for name in deterministic)
         with (out / 'OUTPUT_HASHES.sha256').open('x', encoding='utf-8', newline='\n') as handle: handle.write(hashes)
         if args.check_evidence:
@@ -266,7 +286,9 @@ def main(argv=None):
         print(json.dumps({'passed': True, 'tests': tests['tests'], 'skipped': len(tests['skipped']),
                           'semantic_false_accepts': semantics['semantic_false_accepts'],
                           'authority_false_accepts': current['current_authority_false_accepts'],
-                          'copied_files': staging['copied_files'], 'output': str(out)}))
+                          'copied_files': staging['copied_files'], 'deterministic_outputs': len(deterministic),
+                          'duplicate_simulated_callbacks': continuation['dispatch']['duplicate_callbacks'],
+                          'output': str(out)}))
         return 0
     except (ValueError, OSError, TypeError, KeyError) as error:
         print(json.dumps({'passed': False, 'error': str(error), 'generation_submitted': False}), file=sys.stderr)

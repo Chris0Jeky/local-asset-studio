@@ -3,8 +3,8 @@ run: P36-B-20261126-2
 lane: P36
 part: B
 base: 0270760a
-phase: building
-updated: 2026-11-27T00:42Z
+phase: measuring
+updated: 2026-11-27T00:47Z
 tests: py -3 prototypes/pro/P36/P36-B-20261126-2/prove.py --tests-only --output .runtime/pro/P36-B-20261126-2/owner-tests-1
 evidence: py -3 prototypes/pro/P36/P36-B-20261126-2/prove.py --output .runtime/pro/P36-B-20261126-2/owner-proof-1 --check-evidence prototypes/pro/P36/P36-B-20261126-2/EVIDENCE.json --check-hashes prototypes/pro/P36/P36-B-20261126-2/OUTPUT_HASHES.sha256
 hashes: prototypes/pro/P36/P36-B-20261126-2/OUTPUT_HASHES.sha256
@@ -17,17 +17,19 @@ hashes: prototypes/pro/P36/P36-B-20261126-2/OUTPUT_HASHES.sha256
 - [x] 5. Complete proving checks, hashes, branch inventory, and ready-for-review handoff. (commit 7d2848c)
 
 - [x] 6. Correct actual Studio indexing provenance and prove it through the real indexer. (commit 87783e2)
-- [ ] 7. Implement durable dispatch coordination with crash/restart/concurrency evidence. Complete: 53 focused tests and 23 measured dispatch cases pass; record this checkpoint SHA next.
+- [x] 7. Implement durable dispatch coordination with crash/restart/concurrency evidence. (commit ccf9ced)
 - [x] 8. Implement independent consumer integrity and current-authority verification. (commit 9ad9db5)
 - [ ] 9. Publish expanded evidence, adoption and reviewed continuation closeout.
 
 ## Next
-Record this checkpoint SHA for item 7. Durable dispatch and atomic exact-observation reconciliation now have 53 passing focused tests, including six independent review regressions. dispatch_evidence.py observed exactly 10 expected simulated callbacks across 23 cases, zero duplicates, four independent-process crash boundaries and a three-process claim race. No actual generation/native work occurred. Integrate/publish the deterministic indexing, production and consumer evidence modules, then run the expanded prove.py twice in fresh runtime directories and compare all eleven deterministic outputs. The full repository suite is running to .runtime/pro/P36-B-20261126-2/full-suite-continuation.log. Preserve historical BASELINE_EVIDENCE.json and BASELINE_OUTPUT_HASHES.sha256. Finish README, ADOPTION, DISPATCH_API, VERIFICATION and the continuation report; update Lumenfold issue #3175 and copy the report to the existing Drive run folder. Check branch inventory, done state and ready PR only after checks finish.
+Expanded prove.py now passes 303 tests without skips using the pinned Lumenfold validator; its first proof is .runtime/pro/P36-B-20261126-2/continuation-proof-1. All four new matrices and eleven hashes are implemented. A standalone fresh proof is running at continuation-proof-2 with committed-evidence/hash comparisons; inspect its log and tests-summary. The full repository suite remains running at full-suite-continuation.log. Publish measured EVIDENCE/OUTPUT_HASHES and the four compact matrix copies, README and updated ADOPTION in the next <=10-file commit. Complete CONTINUATION_REPORT.md and VERIFICATION.md with exact results, run validate-repo.py against the staged final file inventory, inspect all baseline blob hashes and branch/README links, update Lumenfold #3175 and Drive report, then commit done state and mark PR #2049 ready. Real generation, runtime qualification and native adoption remain planned.
 
 ## Not pushed yet
-- prototypes/pro/P36/P36-B-20261126-2/prove.py
-- prototypes/pro/P36/P36-B-20261126-2/indexing_evidence.py
-- prototypes/pro/P36/P36-B-20261126-2/production_evidence.py
-- prototypes/pro/P36/P36-B-20261126-2/consumer_evidence.py
-- prototypes/pro/P36/P36-B-20261126-2/BASELINE_EVIDENCE.json
-- prototypes/pro/P36/P36-B-20261126-2/BASELINE_OUTPUT_HASHES.sha256
+- prototypes/pro/P36/P36-B-20261126-2/EVIDENCE.json
+- prototypes/pro/P36/P36-B-20261126-2/OUTPUT_HASHES.sha256
+- prototypes/pro/P36/P36-B-20261126-2/INDEXING_EVIDENCE.json
+- prototypes/pro/P36/P36-B-20261126-2/PREPARATION_EVIDENCE.json
+- prototypes/pro/P36/P36-B-20261126-2/DISPATCH_EVIDENCE.json
+- prototypes/pro/P36/P36-B-20261126-2/CONSUMER_EVIDENCE.json
+- prototypes/pro/P36/P36-B-20261126-2/README.md
+- prototypes/pro/P36/P36-B-20261126-2/ADOPTION.md
