@@ -18,6 +18,7 @@ _APP = str(p.REPO_ROOT / 'app')
 if str(p.REPO_ROOT) not in sys.path: sys.path.insert(0, str(p.REPO_ROOT))
 if _APP not in sys.path: sys.path.insert(0, _APP)
 from characters import validate_body as validate_character_body
+from workspace import AssetWorkspace
 
 
 def _exact(value, fields, label):
@@ -95,6 +96,60 @@ def job_is_settled(job):
     return (all(s.get('prompt_id') == prompt_id and s.get('status') == 'completed'
                 for s, prompt_id in zip(submissions, ids))
             and all(o.get('prompt_id') in ids for o in outputs))
+
+
+def _studio_advisory(field, value):
+    """Recognize only the pinned index_outputs diagnostics, never authority.
+
+    These fields can be added after register() snapshots the descriptor, or
+    already be present when a retained job is indexed into a new Workspace.
+    Their values do not attest source identity, acceptance or picture quality.
+    """
+    if field == 'empty_picture':
+        return type(value) is str and value in ('', 'uniform', 'transparent')
+    if field == 'snapshot_error':
+        return type(value) is str and len(value) <= 200
+    if type(value) is not dict: return False
+    if set(value) == {'error'}:
+        return type(value['error']) is str and len(value['error']) <= 200
+    if set(value) != {'method', 'sample_size', 'threshold', 'left_edge_density',
+                     'right_edge_density', 'left_right_ratio', 'comparison'}: return False
+    size = value['sample_size']
+    if (value['method'] != 'adjacent-luma-v1' or type(value['threshold']) is not int
+            or value['threshold'] != 16 or type(size) is not list or len(size) != 2
+            or any(type(n) is not int for n in size)
+            or not (4 <= size[0] <= 512 and 2 <= size[1] <= 512)): return False
+    left, right = value['left_edge_density'], value['right_edge_density']
+    if any(type(n) not in (float, int) or not 0 <= n <= 1 for n in (left, right)): return False
+    ratio = value['left_right_ratio']
+    if (right == 0 and ratio is not None) or (right != 0 and
+            (type(ratio) not in (float, int) or ratio != left / right)): return False
+    comparison = 'left quieter' if left < right else 'left busier' if left > right else 'equal detail'
+    return value['comparison'] == comparison
+
+
+def _output_is_bound(job, row):
+    """Compare immutable provenance, separately binding the actual job/index ID."""
+    index, outputs = row['output_index'], job.get('outputs')
+    if (type(outputs) is not list or type(index) is not int or not 0 <= index < len(outputs)
+            or row['job_id'] != job['id'] or row['id'] != AssetWorkspace.asset_id(job, index)):
+        return False
+    source = p.decode_json(row['source'])
+    normalized = []
+    for descriptor in (source, outputs[index]):
+        if type(descriptor) is not dict: return False
+        provenance = descriptor.copy()
+        # asset_id is an identity hint, not an advisory field to discard blindly.
+        if 'asset_id' in provenance:
+            if type(provenance['asset_id']) is not str or provenance.pop('asset_id') != row['id']:
+                return False
+        for field in ('empty_picture', 'text_safe', 'snapshot_error'):
+            if field in provenance and not _studio_advisory(field, provenance.pop(field)):
+                return False
+        # Every other addition, removal or value change remains significant.
+        # Canonical JSON also distinguishes bool/int aliases such as True and 1.
+        normalized.append(p.canonical_bytes(provenance))
+    return normalized[0] == normalized[1]
 
 
 def capture_authority(experiments, family, binding, *, stages=None):
@@ -212,9 +267,7 @@ def capture_authority(experiments, family, binding, *, stages=None):
                     if not job_is_settled(job): block('job_unresolved', stage, job_id)
                     if item['jobs'][job_id] != {'state_sha256': state_hash, 'workflow_sha256': workflow_hash}:
                         block('job_record_changed', stage, job_id)
-                    index = row['output_index']; outputs = job.get('outputs')
-                    if (type(outputs) is not list or type(index) is not int or not 0 <= index < len(outputs)
-                            or outputs[index] != p.decode_json(row['source'])):
+                    if not _output_is_bound(job, row):
                         block('job_output_unbound', stage, artifact['key'])
                 if used_jobs != set(item['jobs']): block('job_inventory_changed', stage)
             # The read transaction keeps all authority rows in one consistent SQLite snapshot.
