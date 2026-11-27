@@ -1,0 +1,460 @@
+{
+  "schema": "las.p36-first-character-plan/1",
+  "run": "P36-B-20261125-1",
+  "evidence_state": "planned",
+  "purpose": "Resolve existing Sable A2, then admit only identity-preserving, explicitly accepted stage members.",
+  "submission_payload": null,
+  "generation_authorized_by_this_plan": false,
+  "target": {
+    "character": "Sable",
+    "revision_label": "A2",
+    "exact_anchor_asset_id": null,
+    "exact_anchor_sha256": null,
+    "native_source_sha256": null,
+    "acceptance_receipt": null,
+    "resolution_state": "unresolved",
+    "source_record": "Lumenfold docs/ORDERS.md, 2026-11-20 04:19; later accepted-demo record requires exact byte/scope resolution.",
+    "do_not_substitute": [
+      "legacy packs/sable slender default",
+      "older BIBLE palette",
+      "Kiri A4 without an explicit replan",
+      "new reconstruction of missing accepted source"
+    ]
+  },
+  "existing_authority": {
+    "new_cast_studies": "2026-11-14 hold remains relevant; no blanket restart inferred",
+    "fighter_finishing": "2026-11-19 instruction scoped to supplied Kiri/Sable inputs",
+    "accepted_demos": "2026-11-20 record names Kiri A4 and Sable A2; not hashes or new P36 acceptance",
+    "anima_terms": "Existing 2026-11-01 owner position is retained; do not reopen already answered generic permission."
+  },
+  "hard_rules": [
+    "Compare each stage directly to exact accepted concept and frozen policy.",
+    "Every required view and feature passes independently; missing, uncertain or stale evidence blocks.",
+    "Owner acceptance and intended-use licence decisions remain separate from generation and inspection.",
+    "Use authoritative Workspace acceptance/revocation and upstream job history before live adoption.",
+    "No automatic submit, download, package change, uncertain retry or private owner-model access.",
+    "All new realized members need receipts; all listed members currently remain planned."
+  ],
+  "calibration": {
+    "status": "planned",
+    "policy": null,
+    "reason": "No actual A2 pixels or owner-labelled calibration set supplied; synthetic thresholds must not become character defaults.",
+    "target_critical_false_passes": 0,
+    "denominator": null,
+    "require_held_out_labels": true,
+    "report_false_rejections": true,
+    "perceptual_identity_verified": false
+  },
+  "trial_budget": {
+    "status": "proposed_not_armed",
+    "primary_attempts": 8,
+    "shared_reserve": 4,
+    "total_cap": 12,
+    "batch_size": 1,
+    "design": "Anima Turbo vs Base x portrait vs simple full-body scene x two seeds",
+    "counts": [
+      "warmups",
+      "failed",
+      "cancelled",
+      "uncertain",
+      "repairs"
+    ],
+    "max_repairs_per_case": 1,
+    "stop": "First critical identity failure blocks that branch; uncertainty requires observation of retained prompt, never repetition.",
+    "new_3d_attempts_in_this_budget": 0
+  },
+  "source_policy": {
+    "reuse_first": true,
+    "missing_references": "Keep unresolved; do not invent views, hashes or acceptance.",
+    "prompt_binding": "Verify actual Anima scene-only grammar and Klein last_reference order; generic Picture N compiler is not presumed qualified.",
+    "host_preflight": "Read-only graph/node/model hashes, source order, crop, effective prompt and existing runtime identity; no automatic replacement."
+  },
+  "routes": [
+    {
+      "id": "reuse-existing-a2",
+      "status": "planned",
+      "role": "Recover attributable exact concept, native model, rig, textures and material evidence; compose existing pixels when sufficient."
+    },
+    {
+      "id": "anima-ref-adapter-turbo",
+      "status": "planned",
+      "role": "Later authorized bounded portrait/simple-scene candidate",
+      "model_pins": [
+        "anima-turbo-v1-1",
+        "anima-ref-adapter-v2-r64"
+      ],
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "steps": 8,
+        "cfg": 1,
+        "reference_guidance": 1,
+        "sampler": "er_sde",
+        "scheduler": "simple"
+      },
+      "remaining": "Exact compact encoder provenance; graph/node/prompt binding; A2 identity qualification."
+    },
+    {
+      "id": "anima-ref-adapter",
+      "status": "planned",
+      "role": "Paired quality comparison",
+      "model_pins": [
+        "anima-base-v1-0",
+        "anima-ref-adapter-v2-r64"
+      ],
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "steps": 30,
+        "cfg": 4.5,
+        "reference_guidance": 4.5,
+        "sampler": "er_sde",
+        "scheduler": "simple",
+        "apg": true
+      },
+      "remaining": "Same source, budget and scope requirements as Turbo."
+    },
+    {
+      "id": "combine-klein",
+      "status": "planned",
+      "role": "Ordinary pose/edit fallback only within demonstrated range",
+      "model_pins": [
+        "flux2-klein-4b-fp8"
+      ],
+      "remaining": "Reference order, protected regions, local VAE source chain; deep bend is not qualified."
+    },
+    {
+      "id": "combine-klein-9b-skeleton",
+      "status": "planned",
+      "role": "Fallback for an observed pose gap",
+      "model_pins": [
+        "flux2-klein-9b-q6k"
+      ],
+      "remaining": "Explicit route decision and current file/use terms."
+    },
+    {
+      "id": "character-sheet-klein-9b",
+      "status": "planned",
+      "role": "Only a missing-view proposal after study authority and rights resolution",
+      "model_pins": [
+        "flux2-klein-9b-q6k",
+        "tripleview-klein9b-v1"
+      ],
+      "remaining": "Original TripleView permissions, eye/proportion drift and unseen construction; no implicit canon."
+    },
+    {
+      "id": "trellis-rgba",
+      "status": "planned_unqualified_contingency",
+      "role": "One existing local mesh route only if recovered A2 geometry cannot satisfy a documented need",
+      "model_pins": [
+        "trellis-2-diffusion",
+        "trellis-2-shape-vae",
+        "trellis-2-texture-vae",
+        "dino-naf-pixal3d"
+      ],
+      "remaining": "Exact DINO-derived terms, existing AMD/CPU-UV patch revision, accepted RGBA source, deformation topology and identity."
+    }
+  ],
+  "model_records_are": "Baseline models/library.json pins; no installed file was rehashed here.",
+  "model_pins": [
+    {
+      "id": "anima-base-v1-0",
+      "recorded_sha256": "bd43b7cffe1ed1153d9c41e7beb2f18cb1273eafbaa3af3edd6a173dc90a006e",
+      "terms": "CircleStone Labs Non-Commercial License v1.2; separate output permissions",
+      "source": "https://huggingface.co/circlestone-labs/Anima",
+      "installed_bytes_verified": false,
+      "intended_use_clearance": "not_decided_by_this_plan"
+    },
+    {
+      "id": "anima-turbo-v1-1",
+      "recorded_sha256": "fba11953276b57edf59d1dc4f1857ac05aa079c56f982b4d7c20298d57d3f7eb",
+      "terms": "CircleStone Labs Non-Commercial License v1.2; separate output permissions",
+      "source": "https://huggingface.co/circlestone-labs/Anima",
+      "installed_bytes_verified": false,
+      "intended_use_clearance": "not_decided_by_this_plan"
+    },
+    {
+      "id": "anima-ref-adapter-v2-r64",
+      "recorded_sha256": "71dda6079e18d354e16e3347bc49a9b710afd9495c378efbb833d30cac9cb81b",
+      "terms": "CircleStone derivative weights; Apache-2.0 custom-node code",
+      "source": "https://huggingface.co/ElectronGirl/anima-ref-adapter",
+      "installed_bytes_verified": false,
+      "intended_use_clearance": "not_decided_by_this_plan"
+    },
+    {
+      "id": "flux2-klein-4b-fp8",
+      "recorded_sha256": "97ed34fe0567e436200f2faee3939b88f2b5d99f8af2a4dc16532c4245c0ccb6",
+      "terms": "Apache-2.0",
+      "source": "https://huggingface.co/black-forest-labs/FLUX.2-klein-4b-fp8",
+      "installed_bytes_verified": false,
+      "intended_use_clearance": "not_decided_by_this_plan"
+    },
+    {
+      "id": "flux2-klein-9b-q6k",
+      "recorded_sha256": "1cd667293607431e79c9e7e01ecf5c602bd00539c2c0f49d4817a62998b5fe98",
+      "terms": "FLUX Non-Commercial v2.1; separate output permissions; repack lineage retained separately",
+      "source": "https://huggingface.co/black-forest-labs/FLUX.2-klein-9B/blob/main/LICENSE.md",
+      "installed_bytes_verified": false,
+      "intended_use_clearance": "not_decided_by_this_plan"
+    },
+    {
+      "id": "tripleview-klein9b-v1",
+      "recorded_sha256": "2db1f0bb7995e936b58011fb864b4f9909c3858548f2c8d8206514f06694454e",
+      "terms": "Author declares Civitai Model License; exact original permission flags unresolved",
+      "source": "https://huggingface.co/Alissonerdx/CharacterSheet",
+      "installed_bytes_verified": false,
+      "intended_use_clearance": "not_decided_by_this_plan"
+    },
+    {
+      "id": "vae-flux2",
+      "recorded_sha256": "868fe7b343cc8f3a19dbcfcafbc3d5f888802be3f89bd81b65b3621a066ce8f3",
+      "terms": "Official autoencoder Apache-2.0; exact local source-hash match unresolved",
+      "source": "https://github.com/black-forest-labs/flux2",
+      "installed_bytes_verified": false,
+      "intended_use_clearance": "not_decided_by_this_plan"
+    },
+    {
+      "id": "trellis-2-diffusion",
+      "recorded_sha256": "d01952ad137213f6a868f86b6b877026276f84af5eec23069217475a0bad3a31",
+      "terms": "MIT; separate encoder terms unresolved",
+      "source": "https://huggingface.co/Comfy-Org/TRELLIS.2/tree/463441b1c32829ee876e4f297dcfff533cb357a7",
+      "installed_bytes_verified": false,
+      "intended_use_clearance": "not_decided_by_this_plan"
+    },
+    {
+      "id": "trellis-2-shape-vae",
+      "recorded_sha256": "de0cb4949a76c59ee5c091a995a69bcc8c51d5aeda939f0c641a50d2a72341f4",
+      "terms": "MIT",
+      "source": "https://huggingface.co/Comfy-Org/TRELLIS.2/tree/463441b1c32829ee876e4f297dcfff533cb357a7",
+      "installed_bytes_verified": false,
+      "intended_use_clearance": "not_decided_by_this_plan"
+    },
+    {
+      "id": "trellis-2-texture-vae",
+      "recorded_sha256": "714e5ebf094a610e12a8e3b5175c18a62f37f6ea4218acb6073644456b73ab0e",
+      "terms": "MIT",
+      "source": "https://huggingface.co/Comfy-Org/TRELLIS.2/tree/463441b1c32829ee876e4f297dcfff533cb357a7",
+      "installed_bytes_verified": false,
+      "intended_use_clearance": "not_decided_by_this_plan"
+    },
+    {
+      "id": "dino-naf-pixal3d",
+      "recorded_sha256": "4ad2ec4e0879a5b5b04cd97325cc37da954a7b6edca5170b86510f17f2b2290f",
+      "terms": "Repack MIT declaration; Meta DINOv3 custom licence; exact derivation/terms unresolved",
+      "source": "https://huggingface.co/Comfy-Org/Pixal3D/tree/b35ffffa61fa02a86c377d94b755d9fe65d185d9",
+      "installed_bytes_verified": false,
+      "intended_use_clearance": "not_decided_by_this_plan"
+    }
+  ],
+  "stages": [
+    {
+      "stage": "concept",
+      "required_parents": [],
+      "concept_binding": "exact accepted concept receipt required",
+      "evidence_state": "planned",
+      "generation": "planned",
+      "inspection": "unreviewed",
+      "acceptance": "pending",
+      "licence": "unknown",
+      "asset_id": null,
+      "sha256": null,
+      "receipt_id": null,
+      "route": "reuse-existing-a2",
+      "owner_accepts": "Exact identity image and acceptance use; resolve portrait/full-body sources, no old-palette substitution.",
+      "required_evidence": [
+        "exact bytes and source receipts",
+        "current owner acceptance for identity anchor",
+        "frozen per-view rubric"
+      ]
+    },
+    {
+      "stage": "turnaround",
+      "required_parents": [
+        "concept"
+      ],
+      "concept_binding": "exact accepted concept receipt required",
+      "evidence_state": "planned",
+      "generation": "planned",
+      "inspection": "unreviewed",
+      "acceptance": "pending",
+      "licence": "unknown",
+      "asset_id": null,
+      "sha256": null,
+      "receipt_id": null,
+      "route": "reuse-existing-a2; conditional character-sheet-klein-9b",
+      "owner_accepts": "Front/side/back identity and construction; unseen features remain unresolved.",
+      "required_evidence": [
+        "matched camera and view coverage",
+        "face, silhouette, asymmetry checks",
+        "acceptance of proposed hidden construction if any"
+      ]
+    },
+    {
+      "stage": "expressions",
+      "required_parents": [
+        "concept",
+        "turnaround"
+      ],
+      "concept_binding": "exact accepted concept receipt required",
+      "evidence_state": "planned",
+      "generation": "planned",
+      "inspection": "unreviewed",
+      "acceptance": "pending",
+      "licence": "unknown",
+      "asset_id": null,
+      "sha256": null,
+      "receipt_id": null,
+      "route": "reuse-existing-a2; conditional anima-ref-adapter-turbo",
+      "owner_accepts": "Named expressions preserve identity; separate actual native morph/face proof.",
+      "required_evidence": [
+        "neutral and required expression images",
+        "per-view identity and anatomy checks",
+        "native morph inventory before claiming facial animation"
+      ]
+    },
+    {
+      "stage": "outfits",
+      "required_parents": [
+        "concept",
+        "turnaround"
+      ],
+      "concept_binding": "exact accepted concept receipt required",
+      "evidence_state": "planned",
+      "generation": "planned",
+      "inspection": "unreviewed",
+      "acceptance": "pending",
+      "licence": "unknown",
+      "asset_id": null,
+      "sha256": null,
+      "receipt_id": null,
+      "route": "reuse-existing-a2; conditional combine-klein",
+      "owner_accepts": "Default A2 first; any named variant has its own accepted costume scope.",
+      "required_evidence": [
+        "protected identity regions",
+        "variant construction and accessories",
+        "per-variant accepted views and source chain"
+      ]
+    },
+    {
+      "stage": "mesh",
+      "required_parents": [
+        "concept",
+        "turnaround",
+        "expressions",
+        "outfits"
+      ],
+      "concept_binding": "exact accepted concept receipt required",
+      "evidence_state": "planned",
+      "generation": "planned",
+      "inspection": "unreviewed",
+      "acceptance": "pending",
+      "licence": "unknown",
+      "asset_id": null,
+      "sha256": null,
+      "receipt_id": null,
+      "route": "reuse-existing-a2; conditional trellis-rgba",
+      "owner_accepts": "Shape, face, hands, coat, separate parts, UV seams, textures and scale.",
+      "required_evidence": [
+        "exact model/native project/texture hashes",
+        "front side back native view evidence",
+        "triangles, scale, surface error and topology findings"
+      ]
+    },
+    {
+      "stage": "rig",
+      "required_parents": [
+        "concept",
+        "mesh"
+      ],
+      "concept_binding": "exact accepted concept receipt required",
+      "evidence_state": "planned",
+      "generation": "planned",
+      "inspection": "unreviewed",
+      "acceptance": "pending",
+      "licence": "unknown",
+      "asset_id": null,
+      "sha256": null,
+      "receipt_id": null,
+      "route": "Existing A2 rig; existing fighter.py/Manny template path only if required",
+      "owner_accepts": "Deformation, contact, skeleton/weights and expression coverage.",
+      "required_evidence": [
+        "template/source/weight rights",
+        "p99.9 edge stretch <2; left-behind vertices <100; grip <20 mm",
+        "native clips with contact/pose findings; OneHandedV6 not a qualified twin-ring moveset"
+      ]
+    },
+    {
+      "stage": "toon",
+      "required_parents": [
+        "concept",
+        "mesh",
+        "rig"
+      ],
+      "concept_binding": "exact accepted concept receipt required",
+      "evidence_state": "planned",
+      "generation": "planned",
+      "inspection": "unreviewed",
+      "acceptance": "pending",
+      "licence": "unknown",
+      "asset_id": null,
+      "sha256": null,
+      "receipt_id": null,
+      "route": "Existing AnimeLook M_AL_Character, cel ramp and inverted-hull outlines",
+      "owner_accepts": "Approved face/hair/shadow/outline/material appearance under declared lighting.",
+      "required_evidence": [
+        "pinned material and source-map hashes",
+        "neutral warm cool matched views",
+        "actual secondary-motion/plugin dependency proof"
+      ]
+    },
+    {
+      "stage": "unreal",
+      "required_parents": [
+        "concept",
+        "expressions",
+        "outfits",
+        "rig",
+        "toon"
+      ],
+      "concept_binding": "exact accepted concept receipt required",
+      "evidence_state": "planned",
+      "generation": "planned",
+      "inspection": "unreviewed",
+      "acceptance": "pending",
+      "licence": "unknown",
+      "asset_id": null,
+      "sha256": null,
+      "receipt_id": null,
+      "route": "Studio draft pack handoff preparation; later Lumenfold staged consumer import under issue #3175",
+      "owner_accepts": "Handoff readiness and intended artifact selection against the exact accepted concept; not native import or playback.",
+      "required_evidence": [
+        "complete source/dependency hashes and all required accepted ancestors",
+        "matching identity views and explicit handoff-contract quality evidence",
+        "schema-compatible intended metadata; licence facts retained, and explicit use clearance only for release preflight"
+      ]
+    }
+  ],
+  "import_issue": "https://github.com/Chris0Jeky/lumenfold/issues/3175",
+  "adoption_owners": [
+    "Studio agents",
+    "lf-characters-3d",
+    "lf-anime-look"
+  ],
+  "sources": {
+    "studio_base": "0270760a3d4fd9e005a1788bba59d8242b77c2f4",
+    "studio_catalog": "https://github.com/Chris0Jeky/local-asset-studio/blob/0270760a/presets/catalog.json",
+    "models": "https://github.com/Chris0Jeky/local-asset-studio/blob/0270760a/models/library.json",
+    "report": "docs/programmes/systems/research/pro/P36/P36-B-20261125-1/REPORT.md"
+  },
+  "downstream_native_gate": {
+    "state": "planned",
+    "after": "Export accepted unreal handoff-readiness receipt and draft bundle; then consumer import.",
+    "receipt": "Separate Lumenfold native result binding imported hashes and Studio family/handoff hashes.",
+    "requirements": [
+      "actual import log and native asset/dependency paths",
+      "looked-at stills plus representative motion/contact clip",
+      "current identity acceptance and applicable intended-use decision"
+    ],
+    "does_not_follow_from": "Eight prototype receipts or manifest validation alone."
+  }
+}

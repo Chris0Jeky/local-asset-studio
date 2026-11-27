@@ -1,0 +1,765 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "lumenfold.pack/1",
+  "title": "Lumenfold character pack, version 1",
+  "description": "packs/<id>/pack.json. Large files live in the asset store (<LUMENFOLD_ASSETS>/packs/<id>/<path>) and are referenced by key from `files`. Any object member named `file` is such a reference. Keys starting with `x-` are free for lanes to experiment with and are ignored by readers that do not know them. See docs/decisions/0002-character-pack-v1.md.",
+  "type": "object",
+  "required": [
+    "schema",
+    "id",
+    "display_name",
+    "status",
+    "profile",
+    "style",
+    "files",
+    "models",
+    "expressions",
+    "portraits",
+    "voice",
+    "animations",
+    "versus"
+  ],
+  "additionalProperties": false,
+  "patternProperties": {
+    "^x-": true
+  },
+  "properties": {
+    "schema": {
+      "const": "lumenfold.pack/1"
+    },
+    "id": {
+      "$ref": "#/$defs/id"
+    },
+    "display_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "concept",
+        "draft",
+        "playable",
+        "retired"
+      ],
+      "description": "concept: design only, no model yet, games skip it; draft: has a model, files may be missing from the store; playable: every file present and hashed, loads in at least one game; retired: kept for history"
+    },
+    "profile": {
+      "type": "object",
+      "required": [
+        "full_name",
+        "age",
+        "pronouns",
+        "role",
+        "personality",
+        "bio"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": true
+      },
+      "properties": {
+        "full_name": {
+          "type": "string"
+        },
+        "age": {
+          "type": "integer",
+          "minimum": 18,
+          "description": "Every Lumenfold character is an adult (charter, content rule)"
+        },
+        "pronouns": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "description": "One line: what they do in the world"
+        },
+        "personality": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "bio": {
+          "type": "string"
+        },
+        "height_m": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 3
+        },
+        "bible": {
+          "type": "string",
+          "description": "Path of the longer character bible, relative to the repository root"
+        }
+      }
+    },
+    "style": {
+      "type": "object",
+      "required": [
+        "tags"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": true
+      },
+      "properties": {
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "figure": {
+          "type": "string",
+          "description": "e.g. curvy, slender; the variant names usually match"
+        },
+        "palette": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "description": "Name to hex. `accent` is the character's UI colour (party HUD, effects); other names are free"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "files": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/key"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/file"
+      }
+    },
+    "models": {
+      "$ref": "#/$defs/models"
+    },
+    "expressions": {
+      "type": "object",
+      "description": "Expression name (VRM 1.0 preset names: blink, blinkLeft, blinkRight, happy, angry, sad, relaxed, surprised, neutral, aa, ih, ou, ee, oh, lookUp/Down/Left/Right; or custom) to the morph targets that make it, by morph name on the engine mesh. Empty for sprite-only packs.",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "morph",
+            "weight"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "morph": {
+              "type": "string"
+            },
+            "weight": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        }
+      }
+    },
+    "portraits": {
+      "type": "object",
+      "description": "Mood name (neutral, smile, ...) to an image file",
+      "additionalProperties": {
+        "$ref": "#/$defs/ref"
+      }
+    },
+    "voice": {
+      "type": "object",
+      "required": [
+        "engine",
+        "voice_id"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": true
+      },
+      "properties": {
+        "engine": {
+          "type": "string",
+          "description": "e.g. kokoro-82m; voice-audio owns the list"
+        },
+        "voice_id": {
+          "type": "string"
+        },
+        "lang": {
+          "type": "string"
+        },
+        "speed": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "settings": {
+          "type": "object"
+        },
+        "samples": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ref"
+          }
+        }
+      }
+    },
+    "animations": {
+      "type": "object",
+      "required": [
+        "set"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": true
+      },
+      "properties": {
+        "set": {
+          "type": "string",
+          "description": "Locomotion set (animation lane's catalogue): gasp-retarget = Game Animation Sample motion matching retargeted from the UEFN body"
+        },
+        "retarget_source": {
+          "type": "string"
+        },
+        "clips": {
+          "type": "object",
+          "description": "Character-specific clips by name",
+          "additionalProperties": {
+            "$ref": "#/$defs/ref"
+          }
+        },
+        "extra_clips": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Clip ids in pipelines/animation/clips/ added to the set for this character"
+        },
+        "pose_overrides": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Pose id (pipelines/animation/poses/library.json) to the clip id this character uses instead"
+        },
+        "spring_bones": {
+          "enum": [
+            "vrm",
+            "none"
+          ],
+          "description": "vrm: use the VRM's spring bones; none"
+        },
+        "combat_set": {
+          "type": "string",
+          "description": "Combat clip set on the UEFN body (animation lane), default lf-combat-cc0"
+        },
+        "style": {
+          "type": "string",
+          "description": "Movement style the animation lane uses to pick clip variants, e.g. agile, heavy, graceful"
+        }
+      }
+    },
+    "versus": {
+      "type": "array",
+      "description": "Owner judgements from Versus. Empty until the owner has judged; never filled by agents' own taste.",
+      "items": {
+        "type": "object",
+        "required": [
+          "contest",
+          "question",
+          "state"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "contest": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "posted",
+              "judged"
+            ]
+          },
+          "posted": {
+            "type": "string",
+            "format": "date"
+          },
+          "judged": {
+            "type": "string",
+            "format": "date"
+          },
+          "result": {
+            "type": "string",
+            "description": "The owner's outcome as Versus recorded it"
+          }
+        }
+      }
+    },
+    "default_variant": {
+      "type": "string"
+    },
+    "variants": {
+      "type": "object",
+      "description": "Named overlays (e.g. curvy, slender). A reader picks one: each block the variant names replaces the top-level block whole, except `style`, which deep-merges. The top level is the default when there is no default_variant. validate_pack.py checks every merged variant against the full rules.",
+      "propertyNames": {
+        "$ref": "#/$defs/key"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "style": {
+            "type": "object"
+          },
+          "models": {
+            "$ref": "#/$defs/models"
+          },
+          "expressions": {
+            "type": "object"
+          },
+          "portraits": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/$defs/ref"
+            }
+          },
+          "voice": {
+            "type": "object"
+          },
+          "animations": {
+            "type": "object"
+          },
+          "props": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string"
+    },
+    "props": {
+      "type": "object",
+      "description": "Held or worn props (weapons first) by name. A prop attaches to a humanoid bone; the prop file's origin is the grip.",
+      "propertyNames": {
+        "$ref": "#/$defs/key"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "file",
+          "socket"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "$ref": "#/$defs/key"
+          },
+          "socket": {
+            "type": "string",
+            "description": "Bone to attach to, e.g. J_Bip_R_Hand"
+          },
+          "offset": {
+            "type": "object",
+            "required": [
+              "rotation_deg",
+              "space"
+            ],
+            "additionalProperties": false,
+            "description": "How the prop sits in its socket bone, in world-3d's form. space blender-bone: the transform is relative to the socket bone's rest frame as Blender's glTF importer builds it from the character's joined GLB (Bone.matrix_local, roll included, Y along the bone), applied to the prop as Blender's glTF importer brings it in (glTF +Y becomes +Z): world = armature_world @ bone.matrix_local @ T(location_cm/100) @ R_euler_xyz(rotation_deg) @ S(scale); reference implementation pipelines/characters/blender/turnaround.py. space ue-bone: the same in Unreal's imported bone frame, FRotator(pitch, yaw, roll). `hold` states the intent engine-neutrally, so an engine can solve its own rotation from its own bone rest frame instead of converting.",
+            "properties": {
+              "location_cm": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "rotation_deg": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "scale": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "space": {
+                "enum": [
+                  "blender-bone",
+                  "ue-bone"
+                ]
+              },
+              "hold": {
+                "enum": [
+                  "upright",
+                  "facing",
+                  "forward"
+                ],
+                "description": "Intended pose in the bind pose, in the character's frame (up, and forward = the way she faces), with the prop's shaft or barrel being its glTF +Y: upright = shaft up, the prop's glTF +X forward; facing = shaft up, the prop's glTF XY plane facing forward; forward = barrel forward, the prop's glTF +Z up"
+              }
+            }
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "combat": {
+      "type": "object",
+      "description": "The character's combat identity. world-3d and stage-2d own the kit mechanics; this is what the character is.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": true
+      },
+      "properties": {
+        "role": {
+          "type": "string",
+          "description": "e.g. striker, support, breaker, defender"
+        },
+        "element": {
+          "type": "string"
+        },
+        "weapon": {
+          "type": "string",
+          "description": "Weapon type, e.g. wrench, fan, blade; the model is in props"
+        },
+        "style": {
+          "type": "string",
+          "description": "One line on how they fight"
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "kind"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "kind": {
+                "enum": [
+                  "basic",
+                  "heavy",
+                  "skill",
+                  "ultimate",
+                  "dodge",
+                  "counter",
+                  "swap-in",
+                  "passive"
+                ]
+              },
+              "description": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "kit": {
+          "type": "string",
+          "description": "Kit id in the game's own kit data (world-3d games/world3d/data/kits.json); a game falls back to its default kit when missing"
+        },
+        "stats": {
+          "type": "object",
+          "description": "Progression stats: base values at level 1 and growth per level. Names are the game's (hp, atk, def, crit_rate, crit_dmg, energy_regen); numbers are proposals the games may rebalance.",
+          "additionalProperties": false,
+          "properties": {
+            "base": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number"
+              }
+            },
+            "per_level": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number"
+              }
+            },
+            "max_level": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,31}$"
+    },
+    "key": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_.-]*$"
+    },
+    "ref": {
+      "type": "object",
+      "required": [
+        "file"
+      ],
+      "properties": {
+        "file": {
+          "$ref": "#/$defs/key"
+        }
+      }
+    },
+    "file": {
+      "type": "object",
+      "required": [
+        "path",
+        "sha256",
+        "bytes",
+        "source",
+        "licence",
+        "commercial"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$))[^\\\\:]+$",
+          "description": "Relative to the pack's store (<LUMENFOLD_ASSETS>/packs/<id>/), forward slashes, no .. segments"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "source": {
+          "type": "string",
+          "description": "Where it came from: an upstream path, URL or tool, as read"
+        },
+        "made_by": {
+          "type": "string",
+          "description": "The command that rebuilds it from its source"
+        },
+        "licence": {
+          "type": "string",
+          "description": "Licence terms as read, never inferred"
+        },
+        "commercial": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        },
+        "restrictions": {
+          "type": "string"
+        }
+      }
+    },
+    "models": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": true
+      },
+      "properties": {
+        "vrm": {
+          "type": "object",
+          "required": [
+            "file"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "file": {
+              "$ref": "#/$defs/key"
+            },
+            "version": {
+              "enum": [
+                "0.x",
+                "1.0"
+              ]
+            }
+          }
+        },
+        "glb": {
+          "type": "object",
+          "required": [
+            "file"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "file": {
+              "$ref": "#/$defs/key"
+            },
+            "joined": {
+              "type": "boolean",
+              "description": "true: one skinned mesh (Interchange-ready); false: one mesh per node"
+            }
+          }
+        },
+        "fbx": {
+          "type": "object",
+          "required": [
+            "file"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "file": {
+              "$ref": "#/$defs/key"
+            },
+            "unit_scale": {
+              "type": "number"
+            }
+          }
+        },
+        "skeleton": {
+          "enum": [
+            "vrm-humanoid",
+            "ue-mannequin",
+            "mixamo",
+            "custom",
+            "none"
+          ]
+        },
+        "ue": {
+          "type": "object",
+          "description": "Unreal import settings; world-3d owns their content",
+          "properties": {
+            "from": {
+              "enum": [
+                "vrm",
+                "glb",
+                "fbx"
+              ]
+            }
+          }
+        },
+        "godot": {
+          "type": "object",
+          "description": "Godot import settings; stage-2d owns their content",
+          "properties": {
+            "from": {
+              "enum": [
+                "vrm",
+                "glb",
+                "fbx"
+              ]
+            }
+          }
+        },
+        "sprites": {
+          "type": "object",
+          "required": [
+            "file",
+            "frame",
+            "animations"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "file": {
+              "$ref": "#/$defs/key"
+            },
+            "frame": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "minItems": 2,
+              "maxItems": 2,
+              "description": "Frame width and height in pixels"
+            },
+            "pivot": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2,
+              "description": "Feet point in frame pixels"
+            },
+            "pixels_per_metre": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "directions": {
+              "type": "integer",
+              "enum": [
+                1,
+                2,
+                4,
+                8
+              ],
+              "description": "Rows per animation: row = animations[name].row + d, where direction d faces d*360/directions degrees counter-clockwise from screen right (8 directions: 0 right, 2 away, 4 left, 6 toward the camera). With 1 or 2 directions a game mirrors direction 0 for left."
+            },
+            "normal_map": {
+              "$ref": "#/$defs/ref",
+              "description": "Normal map sheet (OpenGL convention), same layout"
+            },
+            "animations": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "required": [
+                  "row",
+                  "frames",
+                  "fps"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "row": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "frames": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "fps": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "loop": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "description": "By name. Names games look for: idle, run, attack1, attack2, attack3, dodge, hurt (2D intake needs at least idle, run, attack1, dodge)"
+            },
+            "glow_map": {
+              "$ref": "#/$defs/ref",
+              "description": "Emission mask sheet, same layout"
+            }
+          }
+        },
+        "toon": {
+          "type": "object",
+          "required": [
+            "file"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "file": {
+              "$ref": "#/$defs/key"
+            }
+          },
+          "description": "JSON file: material name (as on the joined GLB) to its toon look, taken from the VRM's MToon: base (RGBA), shade (RGB), shading_shift, shading_toony, rim {colour, fresnel_power, lift}, outline {mode, width_m, colour}, emissive (RGB), alpha_mode (OPAQUE, MASK, BLEND), alpha_cutoff, double_sided. Engines rebuild cel materials from it; textures stay in the GLB."
+        }
+      }
+    }
+  }
+}
