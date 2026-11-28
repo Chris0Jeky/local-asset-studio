@@ -50,7 +50,7 @@ Everything below exists in the code. Where a feature is only partly proven, the 
 
 ### Guided creation
 
-- **94 presets** in `presets/catalog.json` across pixel art, product and website art, game props, anime and fantasy characters, manga line art and screentone, FLUX.2 Klein, Qwen and Qwen-Image 2.1, Z-Image, Krea 2, Anima, WAI, Animagine, Pony, NoobAI, HiDream O1, MiniMax H3, Wan 2.2, TRELLIS.2 and Hunyuan3D 2.1.
+- **[Preset catalogue](presets/catalog.json)** with entries across pixel art, product and website art, game props, anime and fantasy characters, manga line art and screentone, FLUX.2 Klein, Qwen and Qwen-Image 2.1, Z-Image, Krea 2, Anima, WAI, Animagine, Pony, NoobAI, HiDream O1, MiniMax H3, Wan 2.2, TRELLIS.2 and Hunyuan3D 2.1.
 - Each preset carries a `verified` flag. `true` means a Studio job for that route completed and was inspected. It is not art acceptance.
 - Prompt wildcards, LoRA slots, seed reuse and saved output metadata.
 - Explicit switches between local environments: the primary ComfyUI on `8188` and three isolated ones on `8192` (HiDream O1), `8194` (MiniMax H3) and `8196` (Qwen-Image 2.1). Switches never upgrade packages.
